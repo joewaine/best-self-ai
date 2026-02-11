@@ -21,7 +21,7 @@ export type VoiceId = keyof typeof VOICES;
 
 export async function synthesizeSpeech(
   text: string,
-  voiceId: VoiceId = "antoni",
+  voiceId: VoiceId = "arnold",
 ): Promise<Buffer> {
   const apiKey = process.env.ELEVENLABS_API_KEY;
   if (!apiKey) throw new Error("Missing ELEVENLABS_API_KEY");
