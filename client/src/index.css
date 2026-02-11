@@ -1,0 +1,85 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+
+  --color-background: hsl(210 40% 98%);
+  --color-foreground: hsl(222.2 47.4% 11.2%);
+  --color-card: hsl(0 0% 100%);
+  --color-card-foreground: hsl(222.2 47.4% 11.2%);
+  --color-popover: hsl(0 0% 100%);
+  --color-popover-foreground: hsl(222.2 47.4% 11.2%);
+  --color-primary: hsl(217.2 91.2% 59.8%);
+  --color-primary-foreground: hsl(0 0% 100%);
+  --color-secondary: hsl(210 40% 96%);
+  --color-secondary-foreground: hsl(222.2 47.4% 11.2%);
+  --color-muted: hsl(210 40% 96%);
+  --color-muted-foreground: hsl(215 16% 47%);
+  --color-accent: hsl(210 40% 96%);
+  --color-accent-foreground: hsl(222.2 47.4% 11.2%);
+  --color-destructive: hsl(0 84% 60%);
+  --color-destructive-foreground: hsl(0 0% 100%);
+  --color-border: hsl(214 32% 91%);
+  --color-input: hsl(214 32% 91%);
+  --color-ring: hsl(217.2 91.2% 59.8%);
+
+  --color-chart-1: hsl(220 70% 50%);
+  --color-chart-2: hsl(160 60% 45%);
+  --color-chart-3: hsl(30 80% 55%);
+  --color-chart-4: hsl(280 65% 60%);
+  --color-chart-5: hsl(340 75% 55%);
+
+  --color-sleep: hsl(220 70% 50%);
+  --color-readiness: hsl(160 60% 45%);
+  --color-activity: hsl(30 80% 55%);
+  --color-hrv: hsl(280 65% 60%);
+  --color-hr: hsl(340 75% 55%);
+  --color-stress: hsl(0 70% 50%);
+  --color-recovery: hsl(120 60% 45%);
+
+  --radius-lg: 0.5rem;
+  --radius-md: calc(var(--radius-lg) - 2px);
+  --radius-sm: calc(var(--radius-lg) - 4px);
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  margin: 0;
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* Theme variants based on biological sex */
+.theme-male {
+  --color-background: hsl(217 50% 97%);
+  --color-card: hsl(0 0% 100%);
+  --color-primary: hsl(217 91% 55%);
+  --color-secondary: hsl(217 40% 94%);
+  --color-muted: hsl(217 40% 94%);
+  --color-accent: hsl(217 40% 94%);
+  --color-border: hsl(217 30% 88%);
+  --color-input: hsl(217 30% 88%);
+  --color-ring: hsl(217 91% 55%);
+}
+
+.theme-female {
+  --color-background: hsl(340 40% 97%);
+  --color-card: hsl(0 0% 100%);
+  --color-primary: hsl(340 82% 55%);
+  --color-secondary: hsl(340 30% 94%);
+  --color-muted: hsl(340 30% 94%);
+  --color-accent: hsl(340 30% 94%);
+  --color-border: hsl(340 25% 88%);
+  --color-input: hsl(340 25% 88%);
+  --color-ring: hsl(340 82% 55%);
+}
