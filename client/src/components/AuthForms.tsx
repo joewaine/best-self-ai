@@ -5,6 +5,47 @@ import type { User } from "../lib/auth";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 
+// Lotus icon for branding
+function LotusIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 64 64" fill="none">
+      {/* Center petal */}
+      <path d="M32 8C32 8 28 20 28 28C28 32 30 36 32 38C34 36 36 32 36 28C36 20 32 8 32 8Z" fill="url(#lotus-grad1)"/>
+      {/* Left inner petals */}
+      <path d="M24 12C24 12 18 22 17 30C16 35 18 40 22 42C25 39 27 34 27 30C27 22 24 12 24 12Z" fill="url(#lotus-grad2)" opacity="0.9"/>
+      <path d="M16 18C16 18 8 28 7 36C6 42 9 48 14 50C18 46 21 40 21 35C21 27 16 18 16 18Z" fill="url(#lotus-grad3)" opacity="0.8"/>
+      {/* Right inner petals */}
+      <path d="M40 12C40 12 46 22 47 30C48 35 46 40 42 42C39 39 37 34 37 30C37 22 40 12 40 12Z" fill="url(#lotus-grad2)" opacity="0.9"/>
+      <path d="M48 18C48 18 56 28 57 36C58 42 55 48 50 50C46 46 43 40 43 35C43 27 48 18 48 18Z" fill="url(#lotus-grad3)" opacity="0.8"/>
+      {/* Outer left petal */}
+      <path d="M10 26C10 26 2 36 2 44C2 50 6 55 12 56C16 51 18 44 17 39C16 32 10 26 10 26Z" fill="url(#lotus-grad4)" opacity="0.7"/>
+      {/* Outer right petal */}
+      <path d="M54 26C54 26 62 36 62 44C62 50 58 55 52 56C48 51 46 44 47 39C48 32 54 26 54 26Z" fill="url(#lotus-grad4)" opacity="0.7"/>
+      {/* Center dot */}
+      <circle cx="32" cy="40" r="3" fill="#0d9488"/>
+      {/* Gradients */}
+      <defs>
+        <linearGradient id="lotus-grad1" x1="32" y1="8" x2="32" y2="38" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#5eead4"/>
+          <stop offset="100%" stopColor="#14b8a6"/>
+        </linearGradient>
+        <linearGradient id="lotus-grad2" x1="22" y1="12" x2="22" y2="42" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#5eead4"/>
+          <stop offset="100%" stopColor="#0d9488"/>
+        </linearGradient>
+        <linearGradient id="lotus-grad3" x1="16" y1="18" x2="16" y2="50" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#2dd4bf"/>
+          <stop offset="100%" stopColor="#0f766e"/>
+        </linearGradient>
+        <linearGradient id="lotus-grad4" x1="10" y1="26" x2="10" y2="56" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#99f6e4"/>
+          <stop offset="100%" stopColor="#14b8a6"/>
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
+
 // Eye icons for password visibility toggle
 function EyeIcon({ className }: { className?: string }) {
   return (
@@ -72,9 +113,13 @@ export default function AuthForms({ onSuccess }: AuthFormsProps) {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-sm">
         <div className="bg-card border border-border rounded-xl p-4 sm:p-6 shadow-lg">
-          <h1 className="text-xl sm:text-2xl font-light text-center mb-4 sm:mb-6">
-            {mode === "signin" ? "Welcome Back" : "Create Account"}
-          </h1>
+          <div className="flex flex-col items-center mb-4 sm:mb-6">
+            <LotusIcon className="w-16 h-16 sm:w-20 sm:h-20 mb-3" />
+            <h1 className="text-xl sm:text-2xl font-light text-center">
+              {mode === "signin" ? "Welcome Back" : "Create Account"}
+            </h1>
+            <p className="text-xs text-muted-foreground mt-1">Best Self</p>
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === "signup" && (
