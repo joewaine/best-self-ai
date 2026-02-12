@@ -1,0 +1,1 @@
+/Users/josephwaine/fractal/best-self-voice/whisper.cpp

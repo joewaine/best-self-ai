@@ -1,0 +1,181 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+
+  /* Oura-style dark theme */
+  --color-background: hsl(200 15% 8%);
+  --color-foreground: hsl(40 20% 95%);
+  --color-card: hsl(200 12% 12%);
+  --color-card-foreground: hsl(40 20% 95%);
+  --color-popover: hsl(200 12% 14%);
+  --color-popover-foreground: hsl(40 20% 95%);
+  --color-primary: hsl(170 55% 50%);
+  --color-primary-foreground: hsl(200 15% 8%);
+  --color-secondary: hsl(200 10% 18%);
+  --color-secondary-foreground: hsl(40 20% 85%);
+  --color-muted: hsl(200 10% 18%);
+  --color-muted-foreground: hsl(200 10% 55%);
+  --color-accent: hsl(170 55% 50%);
+  --color-accent-foreground: hsl(200 15% 8%);
+  --color-destructive: hsl(0 65% 55%);
+  --color-destructive-foreground: hsl(0 0% 100%);
+  --color-border: hsl(200 10% 20%);
+  --color-input: hsl(200 10% 20%);
+  --color-ring: hsl(170 55% 50%);
+
+  /* Chart colors - Oura style */
+  --color-chart-1: hsl(260 60% 65%);
+  --color-chart-2: hsl(170 55% 50%);
+  --color-chart-3: hsl(35 90% 60%);
+  --color-chart-4: hsl(300 50% 60%);
+  --color-chart-5: hsl(340 70% 60%);
+
+  /* Health metric colors */
+  --color-sleep: hsl(220 70% 60%);
+  --color-readiness: hsl(170 55% 50%);
+  --color-activity: hsl(35 90% 60%);
+  --color-hrv: hsl(260 60% 65%);
+  --color-hr: hsl(340 70% 60%);
+  --color-stress: hsl(0 65% 55%);
+  --color-recovery: hsl(150 55% 50%);
+  --color-spo2: hsl(200 70% 55%);
+
+  /* Status colors */
+  --color-status-good: hsl(170 55% 50%);
+  --color-status-optimal: hsl(170 55% 50%);
+  --color-status-fair: hsl(35 90% 60%);
+  --color-status-attention: hsl(0 65% 55%);
+
+  --radius-lg: 1rem;
+  --radius-md: 0.75rem;
+  --radius-sm: 0.5rem;
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  margin: 0;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* Custom scrollbar for dark theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-muted-foreground);
+}
+
+/* Oura-style gradient backgrounds */
+.gradient-bg {
+  background: linear-gradient(
+    135deg,
+    hsl(200 15% 8%) 0%,
+    hsl(200 20% 12%) 50%,
+    hsl(200 15% 8%) 100%
+  );
+}
+
+/* Card hover effects */
+.card-hover {
+  transition: all 0.2s ease;
+}
+
+.card-hover:hover {
+  background-color: hsl(200 12% 14%);
+  border-color: hsl(200 10% 25%);
+}
+
+/* Pulse animation for live indicators */
+@keyframes pulse-soft {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+/* Score ring glow effect */
+.score-ring-glow {
+  filter: drop-shadow(0 0 8px currentColor);
+}
+
+/* Status badge styles */
+.status-good {
+  color: var(--color-status-good);
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  font-weight: 300;
+  letter-spacing: 0.05em;
+}
+
+.status-fair {
+  color: var(--color-status-fair);
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  font-weight: 300;
+  letter-spacing: 0.05em;
+}
+
+.status-attention {
+  color: var(--color-status-attention);
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  font-weight: 300;
+  letter-spacing: 0.05em;
+}
+
+/* Theme variants based on biological sex - kept but darkified */
+.theme-male {
+  --color-primary: hsl(200 70% 55%);
+  --color-accent: hsl(200 70% 55%);
+  --color-ring: hsl(200 70% 55%);
+  --color-readiness: hsl(200 70% 55%);
+}
+
+.theme-female {
+  --color-primary: hsl(330 65% 60%);
+  --color-accent: hsl(330 65% 60%);
+  --color-ring: hsl(330 65% 60%);
+  --color-readiness: hsl(330 65% 60%);
+}
+
+/* Health arc gradient */
+.health-arc-gradient {
+  background: conic-gradient(
+    from 180deg,
+    var(--color-status-attention) 0deg,
+    var(--color-status-fair) 120deg,
+    var(--color-status-good) 240deg,
+    var(--color-status-good) 360deg
+  );
+}
