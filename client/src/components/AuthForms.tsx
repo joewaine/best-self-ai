@@ -71,8 +71,8 @@ export default function AuthForms({ onSuccess }: AuthFormsProps) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-sm">
-        <div className="bg-card border border-border rounded-xl p-6 shadow-lg">
-          <h1 className="text-2xl font-bold text-center mb-6">
+        <div className="bg-card border border-border rounded-xl p-4 sm:p-6 shadow-lg">
+          <h1 className="text-xl sm:text-2xl font-light text-center mb-4 sm:mb-6">
             {mode === "signin" ? "Welcome Back" : "Create Account"}
           </h1>
 
@@ -80,7 +80,7 @@ export default function AuthForms({ onSuccess }: AuthFormsProps) {
             {mode === "signup" && (
               <>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Name</label>
+                  <label className="block text-sm font-light mb-1">Name</label>
                   <input
                     type="text"
                     value={name}
@@ -90,7 +90,7 @@ export default function AuthForms({ onSuccess }: AuthFormsProps) {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">
+                  <label className="block text-sm font-light mb-1">
                     Oura Personal Access Token
                   </label>
                   <input
@@ -116,7 +116,7 @@ export default function AuthForms({ onSuccess }: AuthFormsProps) {
             )}
 
             <div>
-              <label className="block text-sm font-medium mb-1">Email</label>
+              <label className="block text-sm font-light mb-1">Email</label>
               <input
                 type="email"
                 value={email}
@@ -128,7 +128,7 @@ export default function AuthForms({ onSuccess }: AuthFormsProps) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Password</label>
+              <label className="block text-sm font-light mb-1">Password</label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
@@ -155,7 +155,7 @@ export default function AuthForms({ onSuccess }: AuthFormsProps) {
             </div>
 
             {error && (
-              <div className="text-sm text-red-500 bg-red-50 dark:bg-red-950/20 p-2 rounded">
+              <div className="text-sm text-destructive bg-destructive/10 p-2 rounded">
                 {error}
               </div>
             )}
@@ -163,7 +163,7 @@ export default function AuthForms({ onSuccess }: AuthFormsProps) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2 px-4 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full py-2 px-4 bg-primary text-primary-foreground rounded-lg font-light hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {loading
                 ? "Loading..."

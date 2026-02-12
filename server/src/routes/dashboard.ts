@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, Response } from "express";
 import {
   fetchDailySleep,
   fetchDailyReadiness,
@@ -13,6 +13,7 @@ import {
 } from "../services/oura";
 import { requireAuth, AuthenticatedRequest } from "../middleware/requireAuth";
 import { getStorage } from "../services/storage";
+import { getCache, CACHE_TTL } from "../services/cache";
 
 const router = Router();
 
@@ -22,10 +23,11 @@ function getDateString(daysAgo: number = 0): string {
   return date.toISOString().split("T")[0];
 }
 
-router.get("/today", requireAuth, async (req: AuthenticatedRequest, res) => {
+router.get("/today", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user!.id;
     const storage = getStorage();
+    const cache = getCache();
     const ouraToken = storage.getOuraToken(userId);
 
     if (!ouraToken) {
@@ -33,6 +35,14 @@ router.get("/today", requireAuth, async (req: AuthenticatedRequest, res) => {
     }
 
     const today = getDateString(0);
+    const cacheKey = `${userId}:dashboard:today:${today}`;
+
+    // Check cache first
+    const cached = cache.get<object>(cacheKey);
+    if (cached) {
+      return res.json(cached);
+    }
+
     const yesterday = getDateString(1);
 
     const [sleep, readiness, activity, stress, spo2, heartRate, sleepPeriods] =
@@ -48,7 +58,7 @@ router.get("/today", requireAuth, async (req: AuthenticatedRequest, res) => {
 
     const latestSleep = sleepPeriods.data[sleepPeriods.data.length - 1];
 
-    res.json({
+    const result = {
       date: today,
       sleep: {
         score: sleep.data[0]?.score ?? null,
@@ -95,17 +105,23 @@ router.get("/today", requireAuth, async (req: AuthenticatedRequest, res) => {
             efficiency: latestSleep.efficiency,
           }
         : null,
-    });
+    };
+
+    // Cache the result
+    cache.set(cacheKey, result, CACHE_TTL.DASHBOARD_TODAY);
+
+    res.json(result);
   } catch (error) {
     console.error("Dashboard error:", error);
     res.status(500).json({ error: "Failed to fetch dashboard data" });
   }
 });
 
-router.get("/week", requireAuth, async (req: AuthenticatedRequest, res) => {
+router.get("/week", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user!.id;
     const storage = getStorage();
+    const cache = getCache();
     const ouraToken = storage.getOuraToken(userId);
 
     if (!ouraToken) {
@@ -114,6 +130,13 @@ router.get("/week", requireAuth, async (req: AuthenticatedRequest, res) => {
 
     const today = getDateString(0);
     const weekAgo = getDateString(7);
+    const cacheKey = `${userId}:dashboard:week:${today}`;
+
+    // Check cache first
+    const cached = cache.get<object>(cacheKey);
+    if (cached) {
+      return res.json(cached);
+    }
 
     const [sleepRange, readinessRange, activityRange, sleepPeriods] =
       await Promise.all([
@@ -123,7 +146,7 @@ router.get("/week", requireAuth, async (req: AuthenticatedRequest, res) => {
         fetchSleepPeriods(weekAgo, today, ouraToken).catch(() => ({ data: [] })),
       ]);
 
-    res.json({
+    const result = {
       startDate: weekAgo,
       endDate: today,
       sleep: sleepRange.data.map((d) => ({
@@ -148,7 +171,12 @@ router.get("/week", requireAuth, async (req: AuthenticatedRequest, res) => {
         deepSleep: s.deep_sleep_duration ?? null,
         remSleep: s.rem_sleep_duration ?? null,
       })),
-    });
+    };
+
+    // Cache the result
+    cache.set(cacheKey, result, CACHE_TTL.DASHBOARD_WEEK);
+
+    res.json(result);
   } catch (error) {
     console.error("Week dashboard error:", error);
     res.status(500).json({ error: "Failed to fetch week data" });

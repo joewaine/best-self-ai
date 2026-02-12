@@ -157,12 +157,12 @@ export default function HoldToTalk({
   );
 
   return (
-    <div className="flex flex-col items-end gap-3">
+    <div className="flex flex-col items-end gap-2 sm:gap-3">
       {/* Expanded Response Card */}
       {expanded && (
-        <div className="w-96 max-h-[60vh] rounded-xl border border-border bg-card/95 backdrop-blur-md shadow-2xl flex flex-col animate-in slide-in-from-bottom-2 fade-in duration-200">
+        <div className="w-[calc(100vw-2rem)] sm:w-80 md:w-96 max-h-[50vh] sm:max-h-[60vh] rounded-xl border border-border bg-card/95 backdrop-blur-md shadow-2xl flex flex-col animate-in slide-in-from-bottom-2 fade-in duration-200">
           <div className="flex items-center justify-between p-4 border-b border-border">
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            <span className="text-xs font-light text-muted-foreground uppercase tracking-wide">
               Voice Coach
             </span>
             <button
@@ -236,7 +236,7 @@ export default function HoldToTalk({
       {/* Floating Action Button */}
       <button
         className={cn(
-          "relative w-14 h-14 rounded-full shadow-lg transition-all duration-200",
+          "relative w-12 h-12 sm:w-14 sm:h-14 rounded-full shadow-lg transition-all duration-200",
           "flex items-center justify-center",
           "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           isRecording
@@ -287,8 +287,8 @@ export default function HoldToTalk({
         )}
       </button>
 
-      {/* Keyboard Hint */}
-      <div className="text-xs text-muted-foreground text-center">
+      {/* Keyboard Hint - hidden on mobile */}
+      <div className="hidden sm:block text-xs text-muted-foreground text-center">
         Hold{" "}
         <kbd className="px-1.5 py-0.5 bg-secondary rounded text-xs font-mono">
           Space

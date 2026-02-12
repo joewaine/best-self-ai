@@ -148,25 +148,25 @@ export default function Settings() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-2xl mx-auto p-6">
+      <div className="max-w-2xl mx-auto p-4 sm:p-6">
         {/* Header with back link */}
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <Link
             to="/"
-            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-4"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-3 sm:mb-4"
           >
             <ArrowLeftIcon className="w-4 h-4" />
             Back to Dashboard
           </Link>
-          <h1 className="text-2xl font-bold">Account Settings</h1>
+          <h1 className="text-xl sm:text-2xl font-light">Account Settings</h1>
         </div>
 
         {/* Password Change Section */}
-        <div className="bg-card border border-border rounded-xl p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-4">Change Password</h2>
+        <div className="bg-card border border-border rounded-xl p-4 sm:p-6 mb-4 sm:mb-6">
+          <h2 className="text-base sm:text-lg font-light mb-3 sm:mb-4">Change Password</h2>
           <form onSubmit={handlePasswordChange} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Current Password</label>
+              <label className="block text-sm font-light mb-1">Current Password</label>
               <div className="relative">
                 <input
                   type={showCurrentPassword ? "text" : "password"}
@@ -191,7 +191,7 @@ export default function Settings() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">New Password</label>
+              <label className="block text-sm font-light mb-1">New Password</label>
               <div className="relative">
                 <input
                   type={showNewPassword ? "text" : "password"}
@@ -217,7 +217,7 @@ export default function Settings() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Confirm New Password</label>
+              <label className="block text-sm font-light mb-1">Confirm New Password</label>
               <div className="relative">
                 <input
                   type={showConfirmPassword ? "text" : "password"}
@@ -243,13 +243,13 @@ export default function Settings() {
             </div>
 
             {passwordError && (
-              <div className="text-sm text-red-500 bg-red-50 dark:bg-red-950/20 p-2 rounded">
+              <div className="text-sm text-destructive bg-destructive/10 p-2 rounded">
                 {passwordError}
               </div>
             )}
 
             {passwordSuccess && (
-              <div className="text-sm text-green-600 bg-green-50 dark:bg-green-950/20 p-2 rounded">
+              <div className="text-sm text-green-500 bg-green-500/10 p-2 rounded">
                 {passwordSuccess}
               </div>
             )}
@@ -257,7 +257,7 @@ export default function Settings() {
             <button
               type="submit"
               disabled={passwordLoading}
-              className="py-2 px-4 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="py-2 px-4 bg-primary text-primary-foreground rounded-lg font-light hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {passwordLoading ? "Saving..." : "Change Password"}
             </button>
@@ -265,16 +265,16 @@ export default function Settings() {
         </div>
 
         {/* Oura Token Section */}
-        <div className="bg-card border border-border rounded-xl p-6">
-          <h2 className="text-lg font-semibold mb-2">Oura Personal Access Token</h2>
-          <p className="text-sm text-muted-foreground mb-4">
+        <div className="bg-card border border-border rounded-xl p-4 sm:p-6">
+          <h2 className="text-base sm:text-lg font-light mb-1.5 sm:mb-2">Oura Personal Access Token</h2>
+          <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">
             {hasOuraToken
               ? "You have an Oura token saved. Enter a new token below to update it."
               : "Connect your Oura Ring to see your health data."}
           </p>
           <form onSubmit={handleOuraTokenSave} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-1">
+              <label className="block text-sm font-light mb-1">
                 {hasOuraToken ? "New Oura Token" : "Oura Token"}
               </label>
               <div className="relative">
@@ -312,13 +312,13 @@ export default function Settings() {
             </div>
 
             {ouraError && (
-              <div className="text-sm text-red-500 bg-red-50 dark:bg-red-950/20 p-2 rounded">
+              <div className="text-sm text-destructive bg-destructive/10 p-2 rounded">
                 {ouraError}
               </div>
             )}
 
             {ouraSuccess && (
-              <div className="text-sm text-green-600 bg-green-50 dark:bg-green-950/20 p-2 rounded">
+              <div className="text-sm text-green-500 bg-green-500/10 p-2 rounded">
                 {ouraSuccess}
               </div>
             )}
@@ -326,7 +326,7 @@ export default function Settings() {
             <button
               type="submit"
               disabled={ouraLoading}
-              className="py-2 px-4 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="py-2 px-4 bg-primary text-primary-foreground rounded-lg font-light hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {ouraLoading ? "Saving..." : hasOuraToken ? "Update Token" : "Save Token"}
             </button>

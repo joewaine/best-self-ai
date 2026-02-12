@@ -14,6 +14,8 @@ interface ConversationSidebarProps {
   selectedId: string | null;
   onSelect: (conversation: Conversation) => void;
   onNew: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
 export interface ConversationSidebarHandle {
@@ -39,11 +41,10 @@ function timeAgo(iso: string): string {
 const ConversationSidebar = forwardRef<
   ConversationSidebarHandle,
   ConversationSidebarProps
->(function ConversationSidebar({ selectedId, onSelect, onNew }, ref) {
+>(function ConversationSidebar({ selectedId, onSelect, onNew, isOpen = false, onClose }, ref) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [collapsed, setCollapsed] = useState(false);
 
   const fetchConversations = async () => {
     setLoading(true);
@@ -99,39 +100,15 @@ const ConversationSidebar = forwardRef<
     }
   };
 
-  if (collapsed) {
-    return (
-      <button
-        onClick={() => setCollapsed(false)}
-        className="fixed left-0 top-1/2 -translate-y-1/2 bg-card border border-border rounded-r-lg p-2 shadow-lg hover:bg-muted transition-colors z-50"
-        title="Show conversations"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="m9 18 6-6-6-6" />
-        </svg>
-      </button>
-    );
-  }
-
-  return (
-    <div className="fixed left-0 top-0 h-full w-64 bg-card border-r border-border flex flex-col z-50">
+  const sidebarContent = (
+    <>
       {/* Header */}
       <div className="p-4 border-b border-border flex items-center justify-between">
-        <h2 className="font-semibold">Conversations</h2>
+        <h2 className="font-light text-lg">Conversations</h2>
         <button
-          onClick={() => setCollapsed(true)}
-          className="p-1 rounded hover:bg-muted transition-colors"
-          title="Hide sidebar"
+          onClick={onClose}
+          className="lg:hidden p-1 rounded hover:bg-muted transition-colors"
+          aria-label="Close sidebar"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -144,7 +121,8 @@ const ConversationSidebar = forwardRef<
             strokeLinecap="round"
             strokeLinejoin="round"
           >
-            <path d="m15 18-6-6 6-6" />
+            <path d="M18 6 6 18" />
+            <path d="m6 6 12 12" />
           </svg>
         </button>
       </div>
@@ -153,7 +131,7 @@ const ConversationSidebar = forwardRef<
       <div className="p-3 border-b border-border">
         <button
           onClick={onNew}
-          className="w-full py-2 px-4 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
+          className="w-full py-2.5 px-4 bg-primary text-primary-foreground rounded-lg font-light hover:bg-primary/90 transition-colors"
         >
           + New Conversation
         </button>
@@ -161,7 +139,7 @@ const ConversationSidebar = forwardRef<
 
       {/* Error */}
       {error && (
-        <div className="p-3 text-sm text-red-500 bg-red-50 dark:bg-red-950/20">
+        <div className="p-3 text-sm text-destructive bg-destructive/10">
           {error}
         </div>
       )}
@@ -195,12 +173,12 @@ const ConversationSidebar = forwardRef<
                 }`}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="font-medium truncate text-sm">
+                  <span className="font-light truncate text-sm">
                     {c.title || "Untitled"}
                   </span>
                   <button
                     onClick={(e) => handleDelete(c.id, e)}
-                    className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-muted-foreground hover:text-red-500 transition-all"
+                    className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-all"
                     title="Delete"
                   >
                     <svg
@@ -227,7 +205,32 @@ const ConversationSidebar = forwardRef<
           </div>
         )}
       </div>
-    </div>
+    </>
+  );
+
+  return (
+    <>
+      {/* Mobile overlay */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-50 lg:hidden"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Sidebar - slide in on mobile, fixed on desktop */}
+      <div
+        className={`
+          fixed top-0 left-0 h-full w-72 sm:w-80 lg:w-64 bg-card border-r border-border flex flex-col z-50
+          transform transition-transform duration-300 ease-in-out
+          ${isOpen ? "translate-x-0" : "-translate-x-full"}
+          lg:translate-x-0
+        `}
+      >
+        {sidebarContent}
+      </div>
+    </>
   );
 });
 
