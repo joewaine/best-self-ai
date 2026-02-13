@@ -1,3 +1,5 @@
+// Main dashboard - shows health metrics from Oura ring data
+
 import { useEffect, useState } from "react";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
@@ -68,7 +70,7 @@ type WeekData = {
   }[];
 };
 
-// Helper to get status text and class based on score
+// Map a 0-100 score to a status label and color class
 function getScoreStatus(score: number | null): { text: string; className: string } {
   if (score === null) return { text: "", className: "" };
   if (score >= 85) return { text: "OPTIMAL", className: "status-good" };
@@ -77,7 +79,7 @@ function getScoreStatus(score: number | null): { text: string; className: string
   return { text: "NEEDS ATTENTION", className: "status-attention" };
 }
 
-// Score chip for top bar
+// Small score display used in the top bar
 function ScoreChip({
   icon,
   score,
@@ -164,7 +166,18 @@ function SunriseIcon({ className }: { className?: string }) {
   );
 }
 
-// Large score display with arc
+function RefreshIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+      <path d="M3 3v5h5"/>
+      <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
+      <path d="M16 16h5v5"/>
+    </svg>
+  );
+}
+
+// Circular progress indicator for main scores (readiness, sleep, activity)
 function ScoreArc({
   score,
   label,
@@ -228,6 +241,7 @@ function ScoreArc({
   );
 }
 
+// Reusable card wrapper with consistent styling
 function Card({
   children,
   className,
@@ -250,6 +264,7 @@ function Card({
   );
 }
 
+// Card for showing a single metric like calories or blood oxygen
 function MetricCard({
   icon,
   label,
@@ -293,6 +308,7 @@ function MetricCard({
   );
 }
 
+// Horizontal bar showing sleep stage breakdown (deep, REM, light, awake)
 function SleepStageBar({ sleepDetails }: { sleepDetails: DashboardData["sleepDetails"] }) {
   if (!sleepDetails) return null;
 
@@ -335,6 +351,7 @@ function SleepStageBar({ sleepDetails }: { sleepDetails: DashboardData["sleepDet
   );
 }
 
+// Line chart showing heart rate over time
 function HeartRateChart({ samples, latest }: { samples: { bpm: number; time: string }[]; latest: number | null }) {
   if (samples.length === 0) {
     return <div className="text-muted-foreground text-center py-8">No heart rate data</div>;
@@ -395,6 +412,7 @@ function HeartRateChart({ samples, latest }: { samples: { bpm: number; time: str
   );
 }
 
+// Single event in the day timeline (wake up, fall asleep, etc)
 function TimelineEvent({
   icon,
   time,
@@ -434,6 +452,7 @@ function TimelineEvent({
   );
 }
 
+// Line chart showing 7-day trends for sleep, readiness, and activity scores
 function WeeklyTrendChart({ data }: { data: WeekData }) {
   const chartData = data.sleep.map((s, i) => ({
     day: formatShortDate(s.day).split(",")[0],
@@ -511,6 +530,7 @@ function WeeklyTrendChart({ data }: { data: WeekData }) {
   );
 }
 
+// Bar chart showing daily steps for the week
 function StepsChart({ data }: { data: WeekData }) {
   const chartData = data.activity.map((a) => ({
     day: formatShortDate(a.day).split(",")[0],
@@ -546,6 +566,7 @@ function StepsChart({ data }: { data: WeekData }) {
   );
 }
 
+// Line chart for HRV (heart rate variability) over the week
 function HrvTrendChart({ data }: { data: WeekData }) {
   const chartData = data.sleepDetails.map((s) => ({
     day: formatShortDate(s.day).split(",")[0],
@@ -588,6 +609,7 @@ function HrvTrendChart({ data }: { data: WeekData }) {
   );
 }
 
+// Donut chart comparing stress vs recovery time
 function StressRecoveryDonut({ stress }: { stress: DashboardData["stress"] }) {
   if (stress.stressHigh === null && stress.recoveryHigh === null) {
     return <div className="text-muted-foreground text-center py-4">No stress data</div>;
@@ -633,7 +655,7 @@ function StressRecoveryDonut({ stress }: { stress: DashboardData["stress"] }) {
   );
 }
 
-// Health insight component
+// Personalized health tip based on today's data
 function HealthInsight({
   title,
   description,
@@ -653,30 +675,54 @@ export default function Dashboard({ userName }: { userName?: string }) {
   const [todayData, setTodayData] = useState<DashboardData | null>(null);
   const [weekData, setWeekData] = useState<WeekData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const [todayRes, weekRes] = await Promise.all([
-          fetch(`${API_BASE}/api/dashboard/today`, { credentials: "include" }),
-          fetch(`${API_BASE}/api/dashboard/week`, { credentials: "include" }),
-        ]);
+  // Load both today's data and 7-day history in parallel
+  async function fetchData() {
+    try {
+      const [todayRes, weekRes] = await Promise.all([
+        fetch(`${API_BASE}/api/dashboard/today`, { credentials: "include" }),
+        fetch(`${API_BASE}/api/dashboard/week`, { credentials: "include" }),
+      ]);
 
-        if (!todayRes.ok || !weekRes.ok) {
-          throw new Error("Failed to fetch dashboard data");
-        }
-
-        const [today, week] = await Promise.all([todayRes.json(), weekRes.json()]);
-        setTodayData(today);
-        setWeekData(week);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Unknown error");
-      } finally {
-        setLoading(false);
+      if (!todayRes.ok || !weekRes.ok) {
+        throw new Error("Failed to fetch dashboard data");
       }
-    }
 
+      const [today, week] = await Promise.all([todayRes.json(), weekRes.json()]);
+      setTodayData(today);
+      setWeekData(week);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unknown error");
+    } finally {
+      setLoading(false);
+      setSyncing(false);
+    }
+  }
+
+  // Clear server cache and refetch fresh data from Oura
+  async function handleSync() {
+    setSyncing(true);
+    setError(null);
+    try {
+      // Clear server cache
+      const res = await fetch(`${API_BASE}/api/dashboard/sync`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!res.ok) {
+        throw new Error("Failed to sync");
+      }
+      // Refetch fresh data
+      await fetchData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Sync failed");
+      setSyncing(false);
+    }
+  }
+
+  useEffect(() => {
     fetchData();
   }, []);
 
@@ -710,6 +756,7 @@ export default function Dashboard({ userName }: { userName?: string }) {
     day: "numeric",
   });
 
+  // Time-based greeting
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return "Good morning";
@@ -717,7 +764,7 @@ export default function Dashboard({ userName }: { userName?: string }) {
     return "Good evening";
   };
 
-  // Generate a health insight based on the data
+  // Pick a relevant health insight based on current scores
   const getHealthInsight = () => {
     const readiness = todayData.readiness.score;
     const sleep = todayData.sleep.score;
@@ -775,10 +822,15 @@ export default function Dashboard({ userName }: { userName?: string }) {
               label="Heart rate"
             />
           </div>
-          <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground shrink-0">
-            <div className="w-1.5 h-1.5 rounded-full bg-green-500 pulse-soft" />
-            Synced
-          </div>
+          <button
+            onClick={handleSync}
+            disabled={syncing}
+            className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors shrink-0 disabled:opacity-50"
+            title="Sync with Oura"
+          >
+            <RefreshIcon className={cn("w-4 h-4", syncing && "animate-spin")} />
+            <span className="hidden sm:inline">{syncing ? "Syncing..." : "Sync"}</span>
+          </button>
         </div>
 
         {/* Hero Section - Steps Counter */}

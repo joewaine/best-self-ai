@@ -1,23 +1,27 @@
+// Speech-to-text using local whisper.cpp installation
+
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { spawn } from "node:child_process";
 
+// Run a shell command and wait for it to finish
 function run(cmd: string, args: string[]) {
   return new Promise<void>((resolve, reject) => {
-    const p = spawn(cmd, args, { stdio: ["ignore", "pipe", "pipe"] });
+    const proc = spawn(cmd, args, { stdio: ["ignore", "pipe", "pipe"] });
 
     let stderr = "";
-    p.stderr.on("data", (d) => (stderr += d.toString()));
+    proc.stderr.on("data", (chunk) => (stderr += chunk.toString()));
 
-    p.on("error", reject);
-    p.on("close", (code) => {
+    proc.on("error", reject);
+    proc.on("close", (code) => {
       if (code === 0) return resolve();
       reject(new Error(`${cmd} failed (${code}): ${stderr}`));
     });
   });
 }
 
+// Convert audio buffer to text using whisper.cpp
 export async function transcribeWithWhisperCpp(audioBuffer: Buffer) {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), "voice-"));
   const inputWebm = path.join(dir, "input.webm");

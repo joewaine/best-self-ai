@@ -1,3 +1,5 @@
+// Express server entry point - sets up middleware and mounts all routes
+
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
@@ -11,7 +13,7 @@ import settingsRouter from "./routes/settings";
 
 const app = express();
 
-// CORS for credentials (cookies)
+// Allow requests from the Vite dev server with cookies
 app.use(
   cors({
     origin: ["http://localhost:5173", "http://localhost:5174"],
@@ -21,31 +23,19 @@ app.use(
 
 app.use(express.json());
 
-// Health check
+// Simple health check endpoint for monitoring
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
-// Auth routes (mounted on /api/auth/*)
+// Mount route modules
 app.use("/api/auth", authRouter);
-
-// Voice routes
 app.use("/api/voice", voiceRouter);
-
-// Conversation routes
 app.use("/api/conversations", conversationsRouter);
-
-// Oura debug routes
 app.use("/api/oura", ouraDebugRouter);
-
-// Dashboard routes
 app.use("/api/dashboard", dashboardRouter);
-
-// TTS routes
 app.use("/api/tts", ttsRouter);
-
-// Settings routes
 app.use("/api/settings", settingsRouter);
 
-// Environment check
+// Debug endpoint to check which API keys are configured
 app.get("/api/env-check", (_req, res) => {
   res.json({
     hasOura: !!process.env.OURA_API_KEY,

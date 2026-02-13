@@ -1,3 +1,5 @@
+// Oura Ring API client - fetches health data
+
 type OuraListResponse<T> = {
   data: T[];
   next_token?: string | null;
@@ -69,6 +71,7 @@ export type Sleep = {
 
 const OURA_BASE = "https://api.ouraring.com/v2/usercollection";
 
+// User profile info from Oura
 export type PersonalInfo = {
   id: string;
   age?: number;
@@ -78,6 +81,7 @@ export type PersonalInfo = {
   email?: string;
 };
 
+// Get user's profile info (age, weight, biological sex, etc)
 export async function fetchPersonalInfo(token: string): Promise<PersonalInfo> {
   const res = await fetch(`${OURA_BASE}/personal_info`, {
     headers: { Authorization: `Bearer ${token}` },
@@ -87,6 +91,7 @@ export async function fetchPersonalInfo(token: string): Promise<PersonalInfo> {
   return (await res.json()) as PersonalInfo;
 }
 
+// Generic GET request to Oura API
 async function ouraGet<T>(path: string, params: Record<string, string>, token: string) {
   const url = new URL(`${OURA_BASE}/${path}`);
   Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
@@ -99,6 +104,7 @@ async function ouraGet<T>(path: string, params: Record<string, string>, token: s
   return (await res.json()) as T;
 }
 
+// Fetch daily sleep score and contributors
 export async function fetchDailySleep(day: string, token: string) {
   return ouraGet<OuraListResponse<DailySleep>>("daily_sleep", {
     start_date: day,
@@ -106,6 +112,7 @@ export async function fetchDailySleep(day: string, token: string) {
   }, token);
 }
 
+// Fetch daily readiness score
 export async function fetchDailyReadiness(day: string, token: string) {
   return ouraGet<OuraListResponse<DailyReadiness>>("daily_readiness", {
     start_date: day,
@@ -113,6 +120,7 @@ export async function fetchDailyReadiness(day: string, token: string) {
   }, token);
 }
 
+// Fetch daily activity score and step count
 export async function fetchDailyActivity(day: string, token: string) {
   return ouraGet<OuraListResponse<DailyActivity>>("daily_activity", {
     start_date: day,
@@ -120,6 +128,7 @@ export async function fetchDailyActivity(day: string, token: string) {
   }, token);
 }
 
+// Fetch heart rate samples for a date range
 export async function fetchHeartRate(startDate: string, endDate: string, token: string) {
   return ouraGet<OuraListResponse<HeartRate>>("heartrate", {
     start_datetime: `${startDate}T00:00:00+00:00`,
@@ -127,6 +136,7 @@ export async function fetchHeartRate(startDate: string, endDate: string, token: 
   }, token);
 }
 
+// Fetch stress and recovery data
 export async function fetchDailyStress(day: string, token: string) {
   return ouraGet<OuraListResponse<DailyStress>>("daily_stress", {
     start_date: day,
@@ -134,6 +144,7 @@ export async function fetchDailyStress(day: string, token: string) {
   }, token);
 }
 
+// Fetch blood oxygen levels
 export async function fetchDailySpo2(day: string, token: string) {
   return ouraGet<OuraListResponse<DailySpo2>>("daily_spo2", {
     start_date: day,
@@ -141,6 +152,7 @@ export async function fetchDailySpo2(day: string, token: string) {
   }, token);
 }
 
+// Fetch detailed sleep periods (bedtime, wake time, stages, HRV, etc)
 export async function fetchSleepPeriods(startDate: string, endDate: string, token: string) {
   return ouraGet<OuraListResponse<Sleep>>("sleep", {
     start_date: startDate,

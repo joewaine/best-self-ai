@@ -1,3 +1,5 @@
+// Voice chat overlay - hold spacebar to record, releases to send to AI coach
+
 import { useCallback, useRef, useState, useEffect } from "react";
 import { useHoldToTalk } from "../hooks/useHoldToTalk";
 import { cn } from "../lib/utils";
@@ -5,8 +7,9 @@ import type { Message } from "../types";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 
-// Available ElevenLabs voices - change this to switch voices
-const VOICE = "rachel"; // Options: rachel, drew, clyde, paul, domi, dave, fin, sarah, antoni, josh, arnold, adam, sam
+// Which ElevenLabs voice to use for responses
+// Options: rachel, drew, clyde, paul, domi, dave, fin, sarah, antoni, josh, arnold, adam, sam
+const VOICE = "rachel";
 
 interface HoldToTalkProps {
   conversationId: string | null;
@@ -29,18 +32,19 @@ export default function HoldToTalk({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto-expand when there are messages
+  // Pop open the card when there's something to show
   useEffect(() => {
     if (conversationMessages.length > 0) {
       setExpanded(true);
     }
   }, [conversationMessages.length]);
 
-  // Scroll to bottom when messages change
+  // Keep the chat scrolled to the newest message
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [conversationMessages]);
 
+  // Called when the user releases the spacebar - sends audio to backend
   const onAudioBlob = useCallback(
     async (blob: Blob) => {
       setStatus("sending");
@@ -299,11 +303,11 @@ export default function HoldToTalk({
   );
 }
 
-// Fallback to browser TTS if ElevenLabs fails
+// If ElevenLabs TTS fails, use the browser's built-in speech synthesis
 function speakFallback(text: string) {
   if (!("speechSynthesis" in window)) return;
   window.speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.rate = 1.0;
-  window.speechSynthesis.speak(u);
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.rate = 1.0;
+  window.speechSynthesis.speak(utterance);
 }

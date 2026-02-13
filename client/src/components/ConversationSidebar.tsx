@@ -1,3 +1,5 @@
+// Sidebar showing list of past conversations - can create new ones or delete old
+
 import {
   forwardRef,
   useEffect,
@@ -22,6 +24,7 @@ export interface ConversationSidebarHandle {
   refresh: () => Promise<void>;
 }
 
+// Show relative time like "5m ago" or "2d ago"
 function timeAgo(iso: string): string {
   const then = new Date(iso).getTime();
   const now = Date.now();
@@ -46,6 +49,7 @@ const ConversationSidebar = forwardRef<
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Pull the list of conversations from the API
   const fetchConversations = async () => {
     setLoading(true);
     setError(null);
@@ -63,14 +67,17 @@ const ConversationSidebar = forwardRef<
     }
   };
 
+  // Expose refresh() to parent via ref so it can trigger updates
   useImperativeHandle(ref, () => ({
     refresh: fetchConversations,
   }));
 
+  // Load conversations on mount
   useEffect(() => {
     fetchConversations();
   }, []);
 
+  // Load full conversation with messages when clicked
   const handleSelect = async (id: string) => {
     try {
       const res = await fetch(`${API_BASE}/api/conversations/${id}`, {
@@ -84,8 +91,9 @@ const ConversationSidebar = forwardRef<
     }
   };
 
+  // Delete a conversation (with confirmation built into the UI)
   const handleDelete = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
+    e.stopPropagation(); // don't also trigger select
     try {
       await fetch(`${API_BASE}/api/conversations/${id}`, {
         method: "DELETE",

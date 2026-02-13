@@ -13,7 +13,7 @@ import type {
 import { getSession, signOut } from "./lib/auth";
 import type { User } from "./lib/auth";
 
-// Icons
+// Simple settings gear icon
 function CogIcon({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -33,6 +33,7 @@ function MenuIcon({ className }: { className?: string }) {
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 
+// Main app component - handles auth state and routes between login/main views
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -45,7 +46,7 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const sidebarRef = useRef<ConversationSidebarHandle>(null);
 
-  // Check for existing session on mount
+  // On mount, check if user already has a valid session (e.g. from cookies)
   useEffect(() => {
     async function checkSession() {
       const session = await getSession();
@@ -57,7 +58,7 @@ export default function App() {
     checkSession();
   }, []);
 
-  // Fetch biological sex for theme when user logs in
+  // Grab user's biological sex from Oura to pick the right color theme
   useEffect(() => {
     if (!user) {
       setBiologicalSex(null);
@@ -80,10 +81,12 @@ export default function App() {
     fetchProfile();
   }, [user]);
 
+  // Called after successful login/signup
   const handleAuthSuccess = (authUser: User) => {
     setUser(authUser);
   };
 
+  // Clear everything and return to login screen
   const handleLogout = async () => {
     await signOut();
     setUser(null);
@@ -91,12 +94,14 @@ export default function App() {
     setConversationMessages([]);
   };
 
+  // When user clicks a conversation in the sidebar
   const handleSelectConversation = (conversation: Conversation) => {
     setSelectedConversation(conversation);
     setConversationMessages(conversation.messages);
-    setSidebarOpen(false); // Close sidebar on mobile after selection
+    setSidebarOpen(false); // close sidebar on mobile
   };
 
+  // Create a fresh conversation via the API
   const handleNewConversation = async () => {
     try {
       const res = await fetch(`${API_BASE}/api/conversations`, {
@@ -116,6 +121,7 @@ export default function App() {
     }
   };
 
+  // Append a new user/assistant message pair to the current conversation
   const handleNewMessage = useCallback(
     (userMsg: Message, assistantMsg: Message) => {
       setConversationMessages((prev) => [...prev, userMsg, assistantMsg]);
@@ -123,6 +129,7 @@ export default function App() {
     []
   );
 
+  // Called when HoldToTalk creates a new conversation on the fly
   const handleConversationCreated = useCallback(
     (conversationId: string, title: string) => {
       setSelectedConversation({

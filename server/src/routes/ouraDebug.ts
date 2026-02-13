@@ -8,7 +8,7 @@ export const ouraDebugRouter = Router();
 ouraDebugRouter.get("/yesterday", requireAuth, async (req: AuthenticatedRequest, res) => {
   const userId = req.user!.id;
   const storage = getStorage();
-  const ouraToken = storage.getOuraToken(userId);
+  const ouraToken = await storage.getOuraToken(userId);
 
   if (!ouraToken) {
     return res.status(400).json({ error: "No Oura token configured" });

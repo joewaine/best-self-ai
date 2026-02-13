@@ -1,18 +1,17 @@
+// Voice coaching routes - handles audio upload, transcription, and AI response
+
 import { Router, Response } from "express";
 import multer from "multer";
 import { transcribeWithWhisperCpp } from "../services/whisper";
 import { callClaudeCoach, generateConversationTitle } from "../services/claude";
 import { getOuraSummaryForYesterday } from "../services/ouraSummary";
 import { getStorage } from "../services/storage";
-import {
-  requireAuth,
-  AuthenticatedRequest,
-} from "../middleware/requireAuth";
+import { requireAuth, AuthenticatedRequest } from "../middleware/requireAuth";
 
 export const voiceRouter = Router();
 const upload = multer({ storage: multer.memoryStorage() });
 
-// Protected route that persists to conversation
+// Main voice endpoint - transcribes audio, gets AI response, saves to conversation
 voiceRouter.post(
   "/transcribe-and-reply",
   requireAuth,
@@ -31,7 +30,7 @@ voiceRouter.post(
       let isNewConversation = false;
 
       if (conversationId) {
-        conversation = storage.getConversation(conversationId);
+        conversation = await storage.getConversation(conversationId);
         if (!conversation) {
           return res.status(404).json({ error: "Conversation not found" });
         }
@@ -41,7 +40,7 @@ voiceRouter.post(
         conversationHistory = conversation.messages;
       } else {
         // Create a new conversation automatically
-        conversation = storage.createConversation({
+        conversation = await storage.createConversation({
           userId: req.user!.id,
           title: "New conversation", // Temporary title, will be updated
         });
@@ -53,7 +52,7 @@ voiceRouter.post(
       const transcript = await transcribeWithWhisperCpp(req.file.buffer);
 
       // Get Oura context (if user has token configured)
-      const ouraToken = storage.getOuraToken(req.user!.id);
+      const ouraToken = await storage.getOuraToken(req.user!.id);
       const ouraContext = ouraToken
         ? await getOuraSummaryForYesterday(ouraToken).catch(() => null)
         : null;
@@ -67,15 +66,27 @@ voiceRouter.post(
       });
 
       // Persist messages
-      storage.addMessage(conversationId, { role: "user", content: transcript });
-      storage.addMessage(conversationId, { role: "assistant", content: reply });
+      await storage.addMessage(conversationId, {
+        role: "user",
+        content: transcript,
+      });
+      await storage.addMessage(conversationId, {
+        role: "assistant",
+        content: reply,
+      });
 
       // Generate a title for new conversations
       let conversationTitle = conversation.title;
       if (isNewConversation) {
         try {
-          conversationTitle = await generateConversationTitle(transcript, reply);
-          storage.updateConversationTitle(conversationId, conversationTitle);
+          conversationTitle = await generateConversationTitle(
+            transcript,
+            reply,
+          );
+          await storage.updateConversationTitle(
+            conversationId,
+            conversationTitle,
+          );
         } catch (e) {
           console.error("Failed to generate title:", e);
           conversationTitle = "New conversation";
@@ -93,10 +104,10 @@ voiceRouter.post(
       console.error("Voice route error:", e);
       res.status(500).send(e?.message ?? "Unknown error");
     }
-  }
+  },
 );
 
-// Quick testing route (requires auth for Oura data)
+// Quick test endpoint - same as above but doesn't save to a conversation
 voiceRouter.post(
   "/quick",
   requireAuth,
@@ -110,7 +121,7 @@ voiceRouter.post(
       const transcript = await transcribeWithWhisperCpp(req.file.buffer);
 
       // Get Oura context if user has token
-      const ouraToken = storage.getOuraToken(req.user!.id);
+      const ouraToken = await storage.getOuraToken(req.user!.id);
       const ouraContext = ouraToken
         ? await getOuraSummaryForYesterday(ouraToken).catch(() => null)
         : null;
@@ -126,5 +137,5 @@ voiceRouter.post(
       console.error("Voice quick route error:", e);
       res.status(500).send(e?.message ?? "Unknown error");
     }
-  }
+  },
 );

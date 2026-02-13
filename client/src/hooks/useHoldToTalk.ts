@@ -1,3 +1,6 @@
+// Hook for "hold spacebar to record" functionality
+// Returns isRecording state and calls onAudioBlob when user releases
+
 import { useEffect, useRef, useState } from "react";
 
 type UseHoldToTalkOpts = {
@@ -9,64 +12,69 @@ export function useHoldToTalk({ onAudioBlob }: UseHoldToTalkOpts) {
 
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<BlobPart[]>([]);
-  const holdingRef = useRef(false);
+  const holdingRef = useRef(false); // tracks if space is currently held
 
   useEffect(() => {
+    // Start recording when space is pressed
     const onKeyDown = async (e: KeyboardEvent) => {
       if (e.code !== "Space") return;
 
-      // Don't hijack space when typing
+      // Don't hijack space when user is typing in a form
       const el = e.target as HTMLElement | null;
       const tag = el?.tagName?.toLowerCase();
-      const typing =
+      const isTyping =
         tag === "input" || tag === "textarea" || (el as any)?.isContentEditable;
-      if (typing) return;
+      if (isTyping) return;
 
       e.preventDefault();
 
-      if (holdingRef.current) return; // avoids repeat
+      // Ignore key repeat events (holding down space)
+      if (holdingRef.current) return;
       holdingRef.current = true;
 
       if (isRecording) return;
 
+      // Get mic access and start recording
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
       const mimeType = pickMimeType();
-      const mr = mimeType
+      const recorder = mimeType
         ? new MediaRecorder(stream, { mimeType })
         : new MediaRecorder(stream);
 
       chunksRef.current = [];
 
-      mr.ondataavailable = (ev) => {
+      recorder.ondataavailable = (ev) => {
         if (ev.data && ev.data.size > 0) chunksRef.current.push(ev.data);
       };
 
-      mr.onstop = async () => {
+      // When recording stops, bundle up the audio and send it
+      recorder.onstop = async () => {
         setIsRecording(false);
-        stream.getTracks().forEach((t) => t.stop());
+        stream.getTracks().forEach((track) => track.stop());
 
         const blob = new Blob(chunksRef.current, {
-          type: mr.mimeType || "audio/webm",
+          type: recorder.mimeType || "audio/webm",
         });
         chunksRef.current = [];
 
         await onAudioBlob(blob);
       };
 
-      recorderRef.current = mr;
+      recorderRef.current = recorder;
       setIsRecording(true);
-      mr.start();
+      recorder.start();
     };
 
+    // Stop recording when space is released
     const onKeyUp = (e: KeyboardEvent) => {
       if (e.code !== "Space") return;
       e.preventDefault();
       holdingRef.current = false;
 
-      const mr = recorderRef.current;
-      if (!mr) return;
-      if (mr.state === "recording") mr.stop();
+      const recorder = recorderRef.current;
+      if (!recorder) return;
+      if (recorder.state === "recording") recorder.stop();
     };
 
     window.addEventListener("keydown", onKeyDown, { passive: false });
@@ -81,10 +89,11 @@ export function useHoldToTalk({ onAudioBlob }: UseHoldToTalkOpts) {
   return { isRecording };
 }
 
+// Pick the best audio format the browser supports
 function pickMimeType() {
   const candidates = ["audio/webm;codecs=opus", "audio/webm"];
-  for (const t of candidates) {
-    if ((window as any).MediaRecorder?.isTypeSupported?.(t)) return t;
+  for (const type of candidates) {
+    if ((window as any).MediaRecorder?.isTypeSupported?.(type)) return type;
   }
   return undefined;
 }

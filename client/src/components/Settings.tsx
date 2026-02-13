@@ -1,10 +1,11 @@
+// Settings page - change password and manage Oura token
+
 import { useState, useEffect } from "react";
 import type { FormEvent } from "react";
 import { Link } from "react-router-dom";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 
-// Eye icons for password visibility toggle
 function EyeIcon({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -31,7 +32,7 @@ function ArrowLeftIcon({ className }: { className?: string }) {
 }
 
 export default function Settings() {
-  // Password change state
+  // Password form state
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -42,7 +43,7 @@ export default function Settings() {
   const [passwordSuccess, setPasswordSuccess] = useState("");
   const [passwordLoading, setPasswordLoading] = useState(false);
 
-  // Oura token state
+  // Oura token form state
   const [ouraToken, setOuraToken] = useState("");
   const [showOuraToken, setShowOuraToken] = useState(false);
   const [hasOuraToken, setHasOuraToken] = useState(false);
@@ -50,7 +51,7 @@ export default function Settings() {
   const [ouraSuccess, setOuraSuccess] = useState("");
   const [ouraLoading, setOuraLoading] = useState(false);
 
-  // Check if user has Oura token on mount
+  // On mount, check if the user already has an Oura token saved
   useEffect(() => {
     async function checkOuraToken() {
       try {
@@ -68,6 +69,7 @@ export default function Settings() {
     checkOuraToken();
   }, []);
 
+  // Validate and submit password change
   async function handlePasswordChange(e: FormEvent) {
     e.preventDefault();
     setPasswordError("");
@@ -112,6 +114,7 @@ export default function Settings() {
     }
   }
 
+  // Save or update Oura personal access token
   async function handleOuraTokenSave(e: FormEvent) {
     e.preventDefault();
     setOuraError("");

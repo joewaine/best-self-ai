@@ -1,12 +1,15 @@
 import { betterAuth, BetterAuthOptions } from "better-auth";
-import Database from "better-sqlite3";
+import { Pool } from "pg";
 
-const dbPath = process.env.DATABASE_PATH || "./sqlite.db";
+// Create a connection pool to Supabase Postgres
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
 
 const authOptions: BetterAuthOptions = {
   baseURL: process.env.AUTH_BASE_URL || "http://localhost:3000",
   trustedOrigins: ["http://localhost:5173", "http://localhost:5174"],
-  database: new Database(dbPath),
+  database: pool,
   emailAndPassword: {
     enabled: true,
   },
@@ -19,5 +22,4 @@ const authOptions: BetterAuthOptions = {
 };
 
 export const auth = betterAuth(authOptions);
-
 export type Auth = typeof auth;
