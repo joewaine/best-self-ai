@@ -6,9 +6,15 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
+const trustedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  process.env.FRONTEND_URL,
+].filter(Boolean) as string[];
+
 const authOptions: BetterAuthOptions = {
   baseURL: process.env.AUTH_BASE_URL || "http://localhost:3000",
-  trustedOrigins: ["http://localhost:5173", "http://localhost:5174"],
+  trustedOrigins,
   database: pool,
   emailAndPassword: {
     enabled: true,
