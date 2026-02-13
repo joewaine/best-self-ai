@@ -13,10 +13,16 @@ import settingsRouter from "./routes/settings";
 
 const app = express();
 
-// Allow requests from the Vite dev server with cookies
+// Allow requests from frontend with cookies
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  process.env.FRONTEND_URL,
+].filter(Boolean) as string[];
+
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://localhost:5174"],
+    origin: allowedOrigins,
     credentials: true,
   })
 );
