@@ -4,6 +4,7 @@ import { Pool } from "pg";
 // Create a connection pool to Supabase Postgres
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
 });
 
 const trustedOrigins = [
