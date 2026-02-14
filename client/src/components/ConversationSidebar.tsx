@@ -186,7 +186,7 @@ const ConversationSidebar = forwardRef<
                   </span>
                   <button
                     onClick={(e) => handleDelete(c.id, e)}
-                    className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-all"
+                    className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 p-1 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-all"
                     title="Delete"
                   >
                     <svg
