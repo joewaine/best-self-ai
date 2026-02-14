@@ -1,9 +1,30 @@
-// Voice chat overlay - hold spacebar to record, releases to send to AI coach
+// Voice chat overlay - hold spacebar to record (desktop), tap to record (mobile)
 
 import { useCallback, useRef, useState, useEffect } from "react";
 import { useHoldToTalk } from "../hooks/useHoldToTalk";
+import { useTapToTalk } from "../hooks/useTapToTalk";
 import { cn } from "../lib/utils";
 import type { Message } from "../types";
+
+// Simple mobile detection - checks for touch capability and screen size
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      const hasTouchScreen =
+        "ontouchstart" in window || navigator.maxTouchPoints > 0;
+      const isSmallScreen = window.innerWidth < 768;
+      setIsMobile(hasTouchScreen && isSmallScreen);
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  return isMobile;
+}
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 
@@ -151,8 +172,18 @@ export default function HoldToTalk({
     [conversationId, onNewMessage, onConversationCreated]
   );
 
-  const { isRecording } = useHoldToTalk({ onAudioBlob });
+  const isMobile = useIsMobile();
 
+  // Desktop: hold spacebar to record
+  const { isRecording: isRecordingDesktop } = useHoldToTalk({ onAudioBlob });
+
+  // Mobile: tap to toggle recording
+  const { isRecording: isRecordingMobile, toggleRecording } = useTapToTalk({
+    onAudioBlob,
+  });
+
+  // Use the appropriate recording state based on device
+  const isRecording = isMobile ? isRecordingMobile : isRecordingDesktop;
   const isActive = isRecording || status === "sending" || status === "speaking";
 
   // Filter to only show user and assistant messages
@@ -199,7 +230,7 @@ export default function HoldToTalk({
 
             {displayMessages.length === 0 && !errorMsg && (
               <div className="text-sm text-muted-foreground text-center py-4">
-                Hold Space to start talking
+                {isMobile ? "Tap the mic to start talking" : "Hold Space to start talking"}
               </div>
             )}
 
@@ -239,6 +270,7 @@ export default function HoldToTalk({
 
       {/* Floating Action Button */}
       <button
+        onClick={isMobile ? toggleRecording : undefined}
         className={cn(
           "relative w-12 h-12 sm:w-14 sm:h-14 rounded-full shadow-lg transition-all duration-200",
           "flex items-center justify-center",
@@ -247,9 +279,11 @@ export default function HoldToTalk({
             ? "bg-red-500 scale-110 shadow-red-500/30"
             : status === "sending"
             ? "bg-primary animate-pulse"
-            : "bg-primary hover:bg-primary/90 hover:scale-105"
+            : "bg-primary hover:bg-primary/90 hover:scale-105",
+          isMobile && "active:scale-95"
         )}
-        title="Hold Space to talk"
+        title={isMobile ? "Tap to talk" : "Hold Space to talk"}
+        disabled={status === "sending" || status === "speaking"}
       >
         {/* Microphone Icon */}
         {!isActive && (
@@ -291,14 +325,20 @@ export default function HoldToTalk({
         )}
       </button>
 
-      {/* Keyboard Hint - hidden on mobile */}
-      <div className="hidden sm:block text-xs text-muted-foreground text-center">
-        Hold{" "}
-        <kbd className="px-1.5 py-0.5 bg-secondary rounded text-xs font-mono">
-          Space
-        </kbd>{" "}
-        to talk
-      </div>
+      {/* Interaction Hint */}
+      {isMobile ? (
+        <div className="text-xs text-muted-foreground text-center">
+          {isRecording ? "Tap to stop" : "Tap to talk"}
+        </div>
+      ) : (
+        <div className="hidden sm:block text-xs text-muted-foreground text-center">
+          Hold{" "}
+          <kbd className="px-1.5 py-0.5 bg-secondary rounded text-xs font-mono">
+            Space
+          </kbd>{" "}
+          to talk
+        </div>
+      )}
     </div>
   );
 }
