@@ -5,7 +5,7 @@ import type { User } from "../lib/auth";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 
-// Lotus icon for branding
+// Blue lotus flower - the app's logo
 function LotusIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 64 64" fill="none">
@@ -68,6 +68,7 @@ interface AuthFormsProps {
   onSuccess: (user: User) => void;
 }
 
+// Login/signup form - toggles between the two modes
 export default function AuthForms({ onSuccess }: AuthFormsProps) {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
@@ -78,6 +79,7 @@ export default function AuthForms({ onSuccess }: AuthFormsProps) {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  // Handle form submit for both login and signup
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
@@ -87,7 +89,7 @@ export default function AuthForms({ onSuccess }: AuthFormsProps) {
       if (mode === "signup") {
         const { user } = await signUp(email, password, name);
 
-        // Save Oura token if provided
+        // If they provided an Oura token during signup, save it right away
         if (ouraToken.trim()) {
           await fetch(`${API_BASE}/api/settings/oura-token`, {
             method: "POST",

@@ -1,12 +1,36 @@
+// Voice chat overlay - hold spacebar to record (desktop), tap to record (mobile)
+
 import { useCallback, useRef, useState, useEffect } from "react";
 import { useHoldToTalk } from "../hooks/useHoldToTalk";
+import { useTapToTalk } from "../hooks/useTapToTalk";
 import { cn } from "../lib/utils";
 import type { Message } from "../types";
 
+// Simple mobile detection - checks for touch capability and screen size
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      const hasTouchScreen =
+        "ontouchstart" in window || navigator.maxTouchPoints > 0;
+      const isSmallScreen = window.innerWidth < 768;
+      setIsMobile(hasTouchScreen && isSmallScreen);
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  return isMobile;
+}
+
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 
-// Available ElevenLabs voices - change this to switch voices
-const VOICE = "rachel"; // Options: rachel, drew, clyde, paul, domi, dave, fin, sarah, antoni, josh, arnold, adam, sam
+// Which ElevenLabs voice to use for responses
+// Options: rachel, drew, clyde, paul, domi, dave, fin, sarah, antoni, josh, arnold, adam, sam
+const VOICE = "rachel";
 
 interface HoldToTalkProps {
   conversationId: string | null;
@@ -29,18 +53,19 @@ export default function HoldToTalk({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto-expand when there are messages
+  // Pop open the card when there's something to show
   useEffect(() => {
     if (conversationMessages.length > 0) {
       setExpanded(true);
     }
   }, [conversationMessages.length]);
 
-  // Scroll to bottom when messages change
+  // Keep the chat scrolled to the newest message
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [conversationMessages]);
 
+  // Called when the user releases the spacebar - sends audio to backend
   const onAudioBlob = useCallback(
     async (blob: Blob) => {
       setStatus("sending");
@@ -147,8 +172,18 @@ export default function HoldToTalk({
     [conversationId, onNewMessage, onConversationCreated]
   );
 
-  const { isRecording } = useHoldToTalk({ onAudioBlob });
+  const isMobile = useIsMobile();
 
+  // Desktop: hold spacebar to record
+  const { isRecording: isRecordingDesktop } = useHoldToTalk({ onAudioBlob });
+
+  // Mobile: tap to toggle recording
+  const { isRecording: isRecordingMobile, toggleRecording } = useTapToTalk({
+    onAudioBlob,
+  });
+
+  // Use the appropriate recording state based on device
+  const isRecording = isMobile ? isRecordingMobile : isRecordingDesktop;
   const isActive = isRecording || status === "sending" || status === "speaking";
 
   // Filter to only show user and assistant messages
@@ -166,7 +201,19 @@ export default function HoldToTalk({
               Voice Coach
             </span>
             <button
-              onClick={() => setExpanded(false)}
+              onClick={() => {
+                // Stop any playing audio
+                if (audioRef.current) {
+                  audioRef.current.pause();
+                  audioRef.current = null;
+                }
+                // Also cancel browser TTS fallback if active
+                if ("speechSynthesis" in window) {
+                  window.speechSynthesis.cancel();
+                }
+                setStatus("idle");
+                setExpanded(false);
+              }}
               className="text-muted-foreground hover:text-foreground transition-colors p-1"
             >
               <svg
@@ -195,7 +242,7 @@ export default function HoldToTalk({
 
             {displayMessages.length === 0 && !errorMsg && (
               <div className="text-sm text-muted-foreground text-center py-4">
-                Hold Space to start talking
+                {isMobile ? "Tap the mic to start talking" : "Tap Space to start talking"}
               </div>
             )}
 
@@ -235,6 +282,7 @@ export default function HoldToTalk({
 
       {/* Floating Action Button */}
       <button
+        onClick={isMobile ? toggleRecording : undefined}
         className={cn(
           "relative w-12 h-12 sm:w-14 sm:h-14 rounded-full shadow-lg transition-all duration-200",
           "flex items-center justify-center",
@@ -243,9 +291,11 @@ export default function HoldToTalk({
             ? "bg-red-500 scale-110 shadow-red-500/30"
             : status === "sending"
             ? "bg-primary animate-pulse"
-            : "bg-primary hover:bg-primary/90 hover:scale-105"
+            : "bg-primary hover:bg-primary/90 hover:scale-105",
+          isMobile && "active:scale-95"
         )}
-        title="Hold Space to talk"
+        title={isMobile ? "Tap to talk" : "Tap Space to talk"}
+        disabled={status === "sending" || status === "speaking"}
       >
         {/* Microphone Icon */}
         {!isActive && (
@@ -287,23 +337,29 @@ export default function HoldToTalk({
         )}
       </button>
 
-      {/* Keyboard Hint - hidden on mobile */}
-      <div className="hidden sm:block text-xs text-muted-foreground text-center">
-        Hold{" "}
-        <kbd className="px-1.5 py-0.5 bg-secondary rounded text-xs font-mono">
-          Space
-        </kbd>{" "}
-        to talk
-      </div>
+      {/* Interaction Hint */}
+      {isMobile ? (
+        <div className="text-xs text-muted-foreground text-center">
+          {isRecording ? "Tap to stop" : "Tap to talk"}
+        </div>
+      ) : (
+        <div className="hidden sm:block text-xs text-muted-foreground text-center">
+          {isRecording ? "Tap " : "Tap "}
+          <kbd className="px-1.5 py-0.5 bg-secondary rounded text-xs font-mono">
+            Space
+          </kbd>{" "}
+          {isRecording ? "to stop" : "to talk"}
+        </div>
+      )}
     </div>
   );
 }
 
-// Fallback to browser TTS if ElevenLabs fails
+// If ElevenLabs TTS fails, use the browser's built-in speech synthesis
 function speakFallback(text: string) {
   if (!("speechSynthesis" in window)) return;
   window.speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.rate = 1.0;
-  window.speechSynthesis.speak(u);
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.rate = 1.0;
+  window.speechSynthesis.speak(utterance);
 }

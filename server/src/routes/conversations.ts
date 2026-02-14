@@ -1,38 +1,37 @@
+// CRUD routes for conversations
+
 import { Router, Response } from "express";
-import {
-  requireAuth,
-  AuthenticatedRequest,
-} from "../middleware/requireAuth";
+import { requireAuth, AuthenticatedRequest } from "../middleware/requireAuth";
 import { getStorage } from "../services/storage";
 
 const router = Router();
 
-// All routes require authentication
+// All conversation routes require login
 router.use(requireAuth);
 
-// GET /api/conversations - List user's conversations
-router.get("/", (req: AuthenticatedRequest, res: Response) => {
+// List all conversations for the logged-in user
+router.get("/", async (req: AuthenticatedRequest, res: Response) => {
   const storage = getStorage();
-  const conversations = storage.getConversations(req.user!.id);
+  const conversations = await storage.getConversations(req.user!.id);
   res.json(conversations);
 });
 
-// POST /api/conversations - Create new conversation
-router.post("/", (req: AuthenticatedRequest, res: Response) => {
+// Create a new conversation
+router.post("/", async (req: AuthenticatedRequest, res: Response) => {
   const { title } = req.body;
   const storage = getStorage();
-  const conversation = storage.createConversation({
+  const conversation = await storage.createConversation({
     userId: req.user!.id,
     title,
   });
   res.status(201).json(conversation);
 });
 
-// GET /api/conversations/:id - Get conversation with messages
-router.get("/:id", (req: AuthenticatedRequest, res: Response) => {
+// Get a single conversation with all its messages
+router.get("/:id", async (req: AuthenticatedRequest, res: Response) => {
   const id = req.params.id as string;
   const storage = getStorage();
-  const conversation = storage.getConversation(id);
+  const conversation = await storage.getConversation(id);
 
   if (!conversation) {
     return res.status(404).json({ error: "Conversation not found" });
@@ -46,11 +45,11 @@ router.get("/:id", (req: AuthenticatedRequest, res: Response) => {
   res.json(conversation);
 });
 
-// DELETE /api/conversations/:id - Delete conversation
-router.delete("/:id", (req: AuthenticatedRequest, res: Response) => {
+// Delete a conversation
+router.delete("/:id", async (req: AuthenticatedRequest, res: Response) => {
   const id = req.params.id as string;
   const storage = getStorage();
-  const conversation = storage.getConversation(id);
+  const conversation = await storage.getConversation(id);
 
   if (!conversation) {
     return res.status(404).json({ error: "Conversation not found" });
@@ -61,16 +60,16 @@ router.delete("/:id", (req: AuthenticatedRequest, res: Response) => {
     return res.status(403).json({ error: "Forbidden" });
   }
 
-  storage.deleteConversation(id);
+  await storage.deleteConversation(id);
   res.status(204).send();
 });
 
-// PATCH /api/conversations/:id - Update conversation title
-router.patch("/:id", (req: AuthenticatedRequest, res: Response) => {
+// Update conversation title
+router.patch("/:id", async (req: AuthenticatedRequest, res: Response) => {
   const id = req.params.id as string;
   const { title } = req.body;
   const storage = getStorage();
-  const conversation = storage.getConversation(id);
+  const conversation = await storage.getConversation(id);
 
   if (!conversation) {
     return res.status(404).json({ error: "Conversation not found" });
@@ -81,7 +80,7 @@ router.patch("/:id", (req: AuthenticatedRequest, res: Response) => {
   }
 
   if (title) {
-    storage.updateConversationTitle(id, title);
+    await storage.updateConversationTitle(id, title);
   }
 
   res.json({ ...conversation, title });

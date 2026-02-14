@@ -1,0 +1,22 @@
+services:
+  # Combined frontend + backend - serves React app from Express
+  - type: web
+    name: best-self-ai
+    runtime: node
+    buildCommand: cd client && npm install && npm run build && cd ../server && npm install && npx tsc
+    startCommand: cd server && node dist/index.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: OURA_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: ELEVENLABS_API_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: BETTER_AUTH_SECRET
+        sync: false
+      - key: AUTH_BASE_URL
+        sync: false

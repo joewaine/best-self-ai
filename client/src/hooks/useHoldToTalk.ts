@@ -1,4 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+// Hook for "tap spacebar to record" functionality
+// Tap spacebar to start recording, tap again to stop and send
+
+import { useEffect, useRef, useState, useCallback } from "react";
 
 type UseHoldToTalkOpts = {
   onAudioBlob: (blob: Blob) => Promise<void> | void;
@@ -9,82 +12,99 @@ export function useHoldToTalk({ onAudioBlob }: UseHoldToTalkOpts) {
 
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<BlobPart[]>([]);
-  const holdingRef = useRef(false);
+  const streamRef = useRef<MediaStream | null>(null);
+  const onAudioBlobRef = useRef(onAudioBlob);
 
+  // Keep the callback ref up to date
   useEffect(() => {
-    const onKeyDown = async (e: KeyboardEvent) => {
-      if (e.code !== "Space") return;
+    onAudioBlobRef.current = onAudioBlob;
+  }, [onAudioBlob]);
 
-      // Don't hijack space when typing
-      const el = e.target as HTMLElement | null;
-      const tag = el?.tagName?.toLowerCase();
-      const typing =
-        tag === "input" || tag === "textarea" || (el as any)?.isContentEditable;
-      if (typing) return;
-
-      e.preventDefault();
-
-      if (holdingRef.current) return; // avoids repeat
-      holdingRef.current = true;
-
-      if (isRecording) return;
-
+  const startRecording = useCallback(async () => {
+    try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
 
       const mimeType = pickMimeType();
-      const mr = mimeType
+      const recorder = mimeType
         ? new MediaRecorder(stream, { mimeType })
         : new MediaRecorder(stream);
 
       chunksRef.current = [];
 
-      mr.ondataavailable = (ev) => {
+      recorder.ondataavailable = (ev) => {
         if (ev.data && ev.data.size > 0) chunksRef.current.push(ev.data);
       };
 
-      mr.onstop = async () => {
+      recorder.onstop = async () => {
         setIsRecording(false);
-        stream.getTracks().forEach((t) => t.stop());
+        stream.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
 
         const blob = new Blob(chunksRef.current, {
-          type: mr.mimeType || "audio/webm",
+          type: recorder.mimeType || "audio/webm",
         });
         chunksRef.current = [];
 
-        await onAudioBlob(blob);
+        await onAudioBlobRef.current(blob);
       };
 
-      recorderRef.current = mr;
+      recorderRef.current = recorder;
       setIsRecording(true);
-      mr.start();
-    };
+      recorder.start();
+    } catch (err) {
+      console.error("Failed to start recording:", err);
+      setIsRecording(false);
+    }
+  }, []);
 
-    const onKeyUp = (e: KeyboardEvent) => {
+  const stopRecording = useCallback(() => {
+    const recorder = recorderRef.current;
+    if (!recorder) return;
+    if (recorder.state === "recording") {
+      recorder.stop();
+    }
+  }, []);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
       if (e.code !== "Space") return;
-      e.preventDefault();
-      holdingRef.current = false;
 
-      const mr = recorderRef.current;
-      if (!mr) return;
-      if (mr.state === "recording") mr.stop();
+      // Don't hijack space when user is typing in a form
+      const el = e.target as HTMLElement | null;
+      const tag = el?.tagName?.toLowerCase();
+      const isTyping =
+        tag === "input" || tag === "textarea" || (el as any)?.isContentEditable;
+      if (isTyping) return;
+
+      e.preventDefault();
+
+      // Ignore key repeat events (holding down space)
+      if (e.repeat) return;
+
+      // Toggle recording
+      if (recorderRef.current?.state === "recording") {
+        stopRecording();
+      } else {
+        startRecording();
+      }
     };
 
     window.addEventListener("keydown", onKeyDown, { passive: false });
-    window.addEventListener("keyup", onKeyUp, { passive: false });
 
     return () => {
-      window.removeEventListener("keydown", onKeyDown as any);
-      window.removeEventListener("keyup", onKeyUp as any);
+      window.removeEventListener("keydown", onKeyDown);
     };
-  }, [isRecording, onAudioBlob]);
+  }, [startRecording, stopRecording]);
 
   return { isRecording };
 }
 
+// Pick the best audio format the browser supports
 function pickMimeType() {
   const candidates = ["audio/webm;codecs=opus", "audio/webm"];
-  for (const t of candidates) {
-    if ((window as any).MediaRecorder?.isTypeSupported?.(t)) return t;
+  for (const type of candidates) {
+    if ((window as any).MediaRecorder?.isTypeSupported?.(type)) return type;
   }
   return undefined;
 }

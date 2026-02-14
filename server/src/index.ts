@@ -1,6 +1,9 @@
+// Express server entry point - sets up middleware and mounts all routes
+
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import path from "path";
 import { voiceRouter } from "./routes/voice";
 import { ouraDebugRouter } from "./routes/ouraDebug";
 import dashboardRouter from "./routes/dashboard";
@@ -11,41 +14,35 @@ import settingsRouter from "./routes/settings";
 
 const app = express();
 
-// CORS for credentials (cookies)
+// Allow requests from frontend with cookies
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  process.env.FRONTEND_URL,
+].filter(Boolean) as string[];
+
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://localhost:5174"],
+    origin: allowedOrigins,
     credentials: true,
   })
 );
 
 app.use(express.json());
 
-// Health check
+// Simple health check endpoint for monitoring
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
-// Auth routes (mounted on /api/auth/*)
+// Mount route modules
 app.use("/api/auth", authRouter);
-
-// Voice routes
 app.use("/api/voice", voiceRouter);
-
-// Conversation routes
 app.use("/api/conversations", conversationsRouter);
-
-// Oura debug routes
 app.use("/api/oura", ouraDebugRouter);
-
-// Dashboard routes
 app.use("/api/dashboard", dashboardRouter);
-
-// TTS routes
 app.use("/api/tts", ttsRouter);
-
-// Settings routes
 app.use("/api/settings", settingsRouter);
 
-// Environment check
+// Debug endpoint to check which API keys are configured
 app.get("/api/env-check", (_req, res) => {
   res.json({
     hasOura: !!process.env.OURA_API_KEY,
@@ -53,6 +50,17 @@ app.get("/api/env-check", (_req, res) => {
     hasElevenLabs: !!process.env.ELEVENLABS_API_KEY,
   });
 });
+
+// In production, serve the frontend static files
+if (process.env.NODE_ENV === "production") {
+  const clientPath = path.join(__dirname, "../../client/dist");
+  app.use(express.static(clientPath));
+
+  // SPA fallback - serve index.html for non-API routes
+  app.get("/{*path}", (_req, res) => {
+    res.sendFile(path.join(clientPath, "index.html"));
+  });
+}
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
 app.listen(PORT, () =>

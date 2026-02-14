@@ -5,43 +5,51 @@ import { fetchPersonalInfo } from "../services/oura";
 
 const router = Router();
 
-router.post("/oura-token", requireAuth, async (req: AuthenticatedRequest, res) => {
-  try {
-    const { ouraToken } = req.body;
+router.post(
+  "/oura-token",
+  requireAuth,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const { ouraToken } = req.body;
 
-    if (!ouraToken || typeof ouraToken !== "string") {
-      return res.status(400).json({ error: "ouraToken is required" });
+      if (!ouraToken || typeof ouraToken !== "string") {
+        return res.status(400).json({ error: "ouraToken is required" });
+      }
+
+      const userId = req.user!.id;
+      const storage = getStorage();
+      await storage.setOuraToken(userId, ouraToken);
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Failed to save Oura token:", error);
+      res.status(500).json({ error: "Failed to save Oura token" });
     }
+  },
+);
 
-    const userId = req.user!.id;
-    const storage = getStorage();
-    storage.setOuraToken(userId, ouraToken);
+router.get(
+  "/oura-token",
+  requireAuth,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const storage = getStorage();
+      const ouraToken = await storage.getOuraToken(userId);
 
-    res.json({ success: true });
-  } catch (error) {
-    console.error("Failed to save Oura token:", error);
-    res.status(500).json({ error: "Failed to save Oura token" });
-  }
-});
-
-router.get("/oura-token", requireAuth, async (req: AuthenticatedRequest, res) => {
-  try {
-    const userId = req.user!.id;
-    const storage = getStorage();
-    const ouraToken = storage.getOuraToken(userId);
-
-    res.json({ hasToken: !!ouraToken });
-  } catch (error) {
-    console.error("Failed to check Oura token:", error);
-    res.status(500).json({ error: "Failed to check Oura token" });
-  }
-});
+      res.json({ hasToken: !!ouraToken });
+    } catch (error) {
+      console.error("Failed to check Oura token:", error);
+      res.status(500).json({ error: "Failed to check Oura token" });
+    }
+  },
+);
 
 router.get("/profile", requireAuth, async (req: AuthenticatedRequest, res) => {
   try {
     const userId = req.user!.id;
     const storage = getStorage();
-    const ouraToken = storage.getOuraToken(userId);
+    const ouraToken = await storage.getOuraToken(userId);
 
     if (!ouraToken) {
       return res.json({ biologicalSex: null });

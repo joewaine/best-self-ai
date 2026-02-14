@@ -1,3 +1,5 @@
+// Claude API integration for the AI health coach
+
 import { Message } from "./storage";
 
 type CoachInput = {
@@ -7,9 +9,7 @@ type CoachInput = {
   username?: string;
 };
 
-/**
- * Generate a short, descriptive title for a conversation based on the first message exchange
- */
+// Ask Claude to generate a short title for a new conversation
 export async function generateConversationTitle(
   userMessage: string,
   assistantReply: string
@@ -54,6 +54,7 @@ export async function generateConversationTitle(
   return title.length > 50 ? title.slice(0, 47) + "..." : title;
 }
 
+// Send user's message to Claude along with their health data context
 export async function callClaudeCoach({
   transcript,
   ouraContext,

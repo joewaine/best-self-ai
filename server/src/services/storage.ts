@@ -1,4 +1,6 @@
-import Database, { type Database as DatabaseType } from "better-sqlite3";
+// Database layer - stores conversations, messages, and user settings in Supabase
+
+import { supabase } from "../lib/supabase";
 
 export type Role = "user" | "assistant" | "system";
 
@@ -34,103 +36,70 @@ export class NotFoundError extends Error {
   }
 }
 
-export class SqliteStorage {
-  private db: DatabaseType;
+export class SupabaseStorage {
+  // Create a new conversation for a user
+  async createConversation(input: CreateConversationInput): Promise<Conversation> {
+    const { data, error } = await supabase
+      .from("conversation")
+      .insert({
+        userId: input.userId,
+        title: input.title || null,
+      })
+      .select()
+      .single();
 
-  constructor(dbPath: string = "./sqlite.db") {
-    this.db = new Database(dbPath);
-    this.db.pragma("foreign_keys = ON");
-    this.initTables();
-  }
-
-  private initTables(): void {
-    this.db.exec(`
-      CREATE TABLE IF NOT EXISTS conversation (
-        id TEXT PRIMARY KEY,
-        userId TEXT NOT NULL,
-        title TEXT,
-        createdAt TEXT NOT NULL
-      );
-
-      CREATE TABLE IF NOT EXISTS message (
-        id TEXT PRIMARY KEY,
-        conversationId TEXT NOT NULL,
-        role TEXT NOT NULL,
-        content TEXT NOT NULL,
-        createdAt TEXT NOT NULL,
-        FOREIGN KEY (conversationId) REFERENCES conversation(id) ON DELETE CASCADE
-      );
-
-      CREATE TABLE IF NOT EXISTS user_settings (
-        userId TEXT PRIMARY KEY,
-        ouraToken TEXT,
-        updatedAt TEXT NOT NULL
-      );
-
-      CREATE INDEX IF NOT EXISTS message_conversationId_idx ON message(conversationId);
-      CREATE INDEX IF NOT EXISTS conversation_userId_idx ON conversation(userId);
-    `);
-  }
-
-  createConversation(input: CreateConversationInput): Conversation {
-    const id = crypto.randomUUID();
-    const createdAt = new Date().toISOString();
-    const title = input.title ?? null;
-
-    this.db
-      .prepare(
-        "INSERT INTO conversation (id, userId, title, createdAt) VALUES (?, ?, ?, ?)"
-      )
-      .run(id, input.userId, title, createdAt);
+    if (error) throw new Error(error.message);
 
     return {
-      id,
-      userId: input.userId,
-      createdAt,
-      title: title ?? undefined,
+      id: data.id,
+      userId: data.userId,
+      createdAt: data.createdAt,
+      title: data.title ?? undefined,
       messages: [],
     };
   }
 
-  getConversation(conversationId: string): Conversation | null {
-    const row = this.db
-      .prepare(
-        "SELECT id, userId, title, createdAt FROM conversation WHERE id = ?"
-      )
-      .get(conversationId) as
-      | { id: string; userId: string; title: string | null; createdAt: string }
-      | undefined;
+  // Get a conversation with all its messages
+  async getConversation(conversationId: string): Promise<Conversation | null> {
+    const { data: convo, error } = await supabase
+      .from("conversation")
+      .select("*")
+      .eq("id", conversationId)
+      .single();
 
-    if (!row) return null;
+    if (error || !convo) return null;
 
-    const messages = this.db
-      .prepare(
-        "SELECT id, role, content, createdAt FROM message WHERE conversationId = ? ORDER BY createdAt ASC"
-      )
-      .all(conversationId) as Message[];
+    const { data: messages } = await supabase
+      .from("message")
+      .select("*")
+      .eq("conversationId", conversationId)
+      .order("createdAt", { ascending: true });
 
     return {
-      id: row.id,
-      userId: row.userId,
-      createdAt: row.createdAt,
-      title: row.title ?? undefined,
-      messages,
+      id: convo.id,
+      userId: convo.userId,
+      createdAt: convo.createdAt,
+      title: convo.title ?? undefined,
+      messages: (messages || []).map((m) => ({
+        id: m.id,
+        role: m.role as Role,
+        content: m.content,
+        createdAt: m.createdAt,
+      })),
     };
   }
 
-  getConversations(userId: string): Conversation[] {
-    const rows = this.db
-      .prepare(
-        "SELECT id, userId, title, createdAt FROM conversation WHERE userId = ? ORDER BY createdAt DESC"
-      )
-      .all(userId) as {
-      id: string;
-      userId: string;
-      title: string | null;
-      createdAt: string;
-    }[];
+  // List all conversations for a user (without messages)
+  async getConversations(userId: string): Promise<Conversation[]> {
+    const { data, error } = await supabase
+      .from("conversation")
+      .select("*")
+      .eq("userId", userId)
+      .order("createdAt", { ascending: false });
 
-    return rows.map((row) => ({
+    if (error) throw new Error(error.message);
+
+    return (data || []).map((row) => ({
       id: row.id,
       userId: row.userId,
       createdAt: row.createdAt,
@@ -139,66 +108,91 @@ export class SqliteStorage {
     }));
   }
 
-  addMessage(conversationId: string, message: CreateMessageInput): Message {
-    const convo = this.db
-      .prepare("SELECT id FROM conversation WHERE id = ?")
-      .get(conversationId);
+  // Add a message to a conversation
+  async addMessage(conversationId: string, message: CreateMessageInput): Promise<Message> {
+    // Make sure the conversation exists first
+    const { data: convo } = await supabase
+      .from("conversation")
+      .select("id")
+      .eq("id", conversationId)
+      .single();
 
     if (!convo) {
       throw new NotFoundError(`Conversation not found: ${conversationId}`);
     }
 
-    const id = crypto.randomUUID();
-    const createdAt = new Date().toISOString();
+    const { data, error } = await supabase
+      .from("message")
+      .insert({
+        conversationId,
+        role: message.role,
+        content: message.content,
+      })
+      .select()
+      .single();
 
-    this.db
-      .prepare(
-        "INSERT INTO message (id, conversationId, role, content, createdAt) VALUES (?, ?, ?, ?, ?)"
-      )
-      .run(id, conversationId, message.role, message.content, createdAt);
+    if (error) throw new Error(error.message);
 
-    return { id, role: message.role, content: message.content, createdAt };
+    return {
+      id: data.id,
+      role: data.role as Role,
+      content: data.content,
+      createdAt: data.createdAt,
+    };
   }
 
-  deleteConversation(conversationId: string): boolean {
-    const result = this.db
-      .prepare("DELETE FROM conversation WHERE id = ?")
-      .run(conversationId);
-    return result.changes > 0;
+  // Delete a conversation and all its messages
+  async deleteConversation(conversationId: string): Promise<boolean> {
+    const { error } = await supabase
+      .from("conversation")
+      .delete()
+      .eq("id", conversationId);
+
+    return !error;
   }
 
-  updateConversationTitle(conversationId: string, title: string): boolean {
-    const result = this.db
-      .prepare("UPDATE conversation SET title = ? WHERE id = ?")
-      .run(title, conversationId);
-    return result.changes > 0;
+  // Update the title of a conversation
+  async updateConversationTitle(conversationId: string, title: string): Promise<boolean> {
+    const { error } = await supabase
+      .from("conversation")
+      .update({ title })
+      .eq("id", conversationId);
+
+    return !error;
   }
 
-  setOuraToken(userId: string, ouraToken: string): void {
-    const updatedAt = new Date().toISOString();
-    this.db
-      .prepare(
-        `INSERT INTO user_settings (userId, ouraToken, updatedAt)
-         VALUES (?, ?, ?)
-         ON CONFLICT(userId) DO UPDATE SET ouraToken = ?, updatedAt = ?`
-      )
-      .run(userId, ouraToken, updatedAt, ouraToken, updatedAt);
+  // Store a user's Oura personal access token
+  async setOuraToken(userId: string, ouraToken: string): Promise<void> {
+    const { error } = await supabase
+      .from("user_settings")
+      .upsert({
+        userId,
+        ouraToken,
+        updatedAt: new Date().toISOString(),
+      });
+
+    if (error) throw new Error(error.message);
   }
 
-  getOuraToken(userId: string): string | null {
-    const row = this.db
-      .prepare("SELECT ouraToken FROM user_settings WHERE userId = ?")
-      .get(userId) as { ouraToken: string | null } | undefined;
-    return row?.ouraToken ?? null;
+  // Retrieve a user's Oura token (returns null if not set)
+  async getOuraToken(userId: string): Promise<string | null> {
+    const { data } = await supabase
+      .from("user_settings")
+      .select("ouraToken")
+      .eq("userId", userId)
+      .single();
+
+    return data?.ouraToken ?? null;
   }
 }
 
-// Singleton instance
-let storageInstance: SqliteStorage | null = null;
+// Single shared instance
+let storageInstance: SupabaseStorage | null = null;
 
-export function getStorage(): SqliteStorage {
+// Get the storage instance (creates one if needed)
+export function getStorage(): SupabaseStorage {
   if (!storageInstance) {
-    storageInstance = new SqliteStorage();
+    storageInstance = new SupabaseStorage();
   }
   return storageInstance;
 }

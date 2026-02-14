@@ -1,3 +1,5 @@
+// Auth helpers that talk to the better-auth backend
+
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 
 export interface User {
@@ -14,6 +16,7 @@ export interface Session {
   };
 }
 
+// Create a new account
 export async function signUp(
   email: string,
   password: string,
@@ -34,6 +37,7 @@ export async function signUp(
   return res.json();
 }
 
+// Log in with existing account
 export async function signIn(
   email: string,
   password: string
@@ -53,6 +57,7 @@ export async function signIn(
   return res.json();
 }
 
+// Log out and clear session cookie
 export async function signOut(): Promise<void> {
   await fetch(`${API_BASE}/api/auth/sign-out`, {
     method: "POST",
@@ -60,6 +65,7 @@ export async function signOut(): Promise<void> {
   });
 }
 
+// Check if we have a valid session (used on page load)
 export async function getSession(): Promise<Session | null> {
   try {
     const res = await fetch(`${API_BASE}/api/auth/get-session`, {
