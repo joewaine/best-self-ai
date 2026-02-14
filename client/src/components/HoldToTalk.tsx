@@ -201,7 +201,19 @@ export default function HoldToTalk({
               Voice Coach
             </span>
             <button
-              onClick={() => setExpanded(false)}
+              onClick={() => {
+                // Stop any playing audio
+                if (audioRef.current) {
+                  audioRef.current.pause();
+                  audioRef.current = null;
+                }
+                // Also cancel browser TTS fallback if active
+                if ("speechSynthesis" in window) {
+                  window.speechSynthesis.cancel();
+                }
+                setStatus("idle");
+                setExpanded(false);
+              }}
               className="text-muted-foreground hover:text-foreground transition-colors p-1"
             >
               <svg
