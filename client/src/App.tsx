@@ -229,6 +229,7 @@ export default function App() {
         <div className="fixed bottom-4 right-4 lg:bottom-6 lg:right-6 z-50">
           <HoldToTalk
             conversationId={selectedConversation?.id || null}
+            conversationTitle={selectedConversation?.title}
             conversationMessages={conversationMessages}
             onNewMessage={handleNewMessage}
             onConversationCreated={handleConversationCreated}
