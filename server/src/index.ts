@@ -3,6 +3,7 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import path from "path";
 import { voiceRouter } from "./routes/voice";
 import { ouraDebugRouter } from "./routes/ouraDebug";
 import dashboardRouter from "./routes/dashboard";
@@ -49,6 +50,17 @@ app.get("/api/env-check", (_req, res) => {
     hasElevenLabs: !!process.env.ELEVENLABS_API_KEY,
   });
 });
+
+// In production, serve the frontend static files
+if (process.env.NODE_ENV === "production") {
+  const clientPath = path.join(__dirname, "../../client/dist");
+  app.use(express.static(clientPath));
+
+  // SPA fallback - serve index.html for non-API routes
+  app.get("*", (_req, res) => {
+    res.sendFile(path.join(clientPath, "index.html"));
+  });
+}
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
 app.listen(PORT, () =>

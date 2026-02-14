@@ -18,7 +18,7 @@ pool.on("error", (err) => {
 const trustedOrigins = [
   "http://localhost:5173",
   "http://localhost:5174",
-  process.env.FRONTEND_URL,
+  process.env.AUTH_BASE_URL,
 ].filter(Boolean) as string[];
 
 const isProduction = process.env.NODE_ENV === "production";
@@ -39,16 +39,6 @@ const authOptions: BetterAuthOptions = {
   advanced: {
     cookiePrefix: "best-self",
     useSecureCookies: isProduction,
-    crossSubDomainCookies: {
-      enabled: isProduction,
-      domain: isProduction ? ".onrender.com" : undefined,
-    },
-    defaultCookieAttributes: {
-      sameSite: isProduction ? "none" : "lax",
-      secure: isProduction,
-      httpOnly: true,
-      path: "/",
-    },
   },
 };
 
