@@ -242,7 +242,7 @@ export default function HoldToTalk({
 
             {displayMessages.length === 0 && !errorMsg && (
               <div className="text-sm text-muted-foreground text-center py-4">
-                {isMobile ? "Tap the mic to start talking" : "Hold Space to start talking"}
+                {isMobile ? "Tap the mic to start talking" : "Tap Space to start talking"}
               </div>
             )}
 
@@ -294,7 +294,7 @@ export default function HoldToTalk({
             : "bg-primary hover:bg-primary/90 hover:scale-105",
           isMobile && "active:scale-95"
         )}
-        title={isMobile ? "Tap to talk" : "Hold Space to talk"}
+        title={isMobile ? "Tap to talk" : "Tap Space to talk"}
         disabled={status === "sending" || status === "speaking"}
       >
         {/* Microphone Icon */}
@@ -344,11 +344,11 @@ export default function HoldToTalk({
         </div>
       ) : (
         <div className="hidden sm:block text-xs text-muted-foreground text-center">
-          Hold{" "}
+          {isRecording ? "Tap " : "Tap "}
           <kbd className="px-1.5 py-0.5 bg-secondary rounded text-xs font-mono">
             Space
           </kbd>{" "}
-          to talk
+          {isRecording ? "to stop" : "to talk"}
         </div>
       )}
     </div>
