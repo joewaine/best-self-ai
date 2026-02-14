@@ -38,9 +38,16 @@ const authOptions: BetterAuthOptions = {
   },
   advanced: {
     cookiePrefix: "best-self",
+    useSecureCookies: isProduction,
     crossSubDomainCookies: {
       enabled: isProduction,
       domain: isProduction ? ".onrender.com" : undefined,
+    },
+    defaultCookieAttributes: {
+      sameSite: isProduction ? "none" : "lax",
+      secure: isProduction,
+      httpOnly: true,
+      path: "/",
     },
   },
 };
