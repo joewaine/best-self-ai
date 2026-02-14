@@ -21,6 +21,8 @@ const trustedOrigins = [
   process.env.FRONTEND_URL,
 ].filter(Boolean) as string[];
 
+const isProduction = process.env.NODE_ENV === "production";
+
 const authOptions: BetterAuthOptions = {
   baseURL: process.env.AUTH_BASE_URL || "http://localhost:3000",
   trustedOrigins,
@@ -32,6 +34,13 @@ const authOptions: BetterAuthOptions = {
     cookieCache: {
       enabled: true,
       maxAge: 60 * 60 * 24 * 7, // 7 days
+    },
+  },
+  advanced: {
+    cookiePrefix: "best-self",
+    crossSubDomainCookies: {
+      enabled: isProduction,
+      domain: isProduction ? ".onrender.com" : undefined,
     },
   },
 };
