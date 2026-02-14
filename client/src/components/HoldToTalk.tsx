@@ -34,7 +34,6 @@ const VOICE = "rachel";
 
 interface HoldToTalkProps {
   conversationId: string | null;
-  conversationTitle?: string;
   conversationMessages: Message[];
   onNewMessage: (userMsg: Message, assistantMsg: Message) => void;
   onConversationCreated?: (conversationId: string, title: string) => void;
@@ -42,7 +41,6 @@ interface HoldToTalkProps {
 
 export default function HoldToTalk({
   conversationId,
-  conversationTitle,
   conversationMessages,
   onNewMessage,
   onConversationCreated,
@@ -54,63 +52,6 @@ export default function HoldToTalk({
   const [expanded, setExpanded] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const prevConversationIdRef = useRef<string | null>(null);
-
-  // Speak a greeting when loading a previous conversation
-  const speakGreeting = useCallback(async (title: string) => {
-    const greeting = `Would you like to continue talking about ${title}?`;
-    setStatus("speaking");
-    setExpanded(true);
-
-    try {
-      const ttsRes = await fetch(`${API_BASE}/api/tts`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ text: greeting, voice: VOICE }),
-      });
-
-      if (!ttsRes.ok) {
-        speakFallback(greeting);
-        setStatus("idle");
-        return;
-      }
-
-      const audioBlob = await ttsRes.blob();
-      const audioUrl = URL.createObjectURL(audioBlob);
-      const audio = new Audio(audioUrl);
-      audioRef.current = audio;
-
-      audio.onended = () => {
-        setStatus("idle");
-        URL.revokeObjectURL(audioUrl);
-      };
-
-      audio.onerror = () => {
-        speakFallback(greeting);
-        setStatus("idle");
-        URL.revokeObjectURL(audioUrl);
-      };
-
-      await audio.play();
-    } catch {
-      speakFallback(greeting);
-      setStatus("idle");
-    }
-  }, []);
-
-  // When conversation changes and has existing messages, speak a greeting
-  useEffect(() => {
-    if (
-      conversationId &&
-      conversationId !== prevConversationIdRef.current &&
-      conversationMessages.length > 0 &&
-      conversationTitle
-    ) {
-      speakGreeting(conversationTitle);
-    }
-    prevConversationIdRef.current = conversationId;
-  }, [conversationId, conversationMessages.length, conversationTitle, speakGreeting]);
 
   // Pop open the card when there's something to show
   useEffect(() => {

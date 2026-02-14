@@ -9,8 +9,6 @@ import {
   Line,
   AreaChart,
   Area,
-  BarChart,
-  Bar,
   XAxis,
   YAxis,
   Tooltip,
@@ -130,14 +128,6 @@ function HeartIcon({ className }: { className?: string }) {
   return (
     <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-    </svg>
-  );
-}
-
-function StepsIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M4 16l4-4-4-4M8 20l4-4-4-4M12 4l4 4-4 4M16 8l4 4-4 4"/>
     </svg>
   );
 }
@@ -530,42 +520,6 @@ function WeeklyTrendChart({ data }: { data: WeekData }) {
   );
 }
 
-// Bar chart showing daily steps for the week
-function StepsChart({ data }: { data: WeekData }) {
-  const chartData = data.activity.map((a) => ({
-    day: formatShortDate(a.day).split(",")[0],
-    steps: a.steps ?? 0,
-  }));
-
-  return (
-    <ResponsiveContainer width="100%" height={140}>
-      <BarChart data={chartData}>
-        <XAxis
-          dataKey="day"
-          tick={{ fill: "var(--color-muted-foreground)", fontSize: 11 }}
-          axisLine={false}
-          tickLine={false}
-        />
-        <YAxis
-          tick={{ fill: "var(--color-muted-foreground)", fontSize: 11 }}
-          axisLine={false}
-          tickLine={false}
-          width={40}
-        />
-        <Tooltip
-          contentStyle={{
-            backgroundColor: "var(--color-card)",
-            border: "1px solid var(--color-border)",
-            borderRadius: "8px",
-            color: "var(--color-foreground)",
-          }}
-        />
-        <Bar dataKey="steps" fill="var(--color-activity)" radius={[4, 4, 0, 0]} name="Steps" />
-      </BarChart>
-    </ResponsiveContainer>
-  );
-}
-
 // Line chart for HRV (heart rate variability) over the week
 function HrvTrendChart({ data }: { data: WeekData }) {
   const chartData = data.sleepDetails.map((s) => ({
@@ -833,18 +787,13 @@ export default function Dashboard({ userName }: { userName?: string }) {
           </button>
         </div>
 
-        {/* Hero Section - Steps Counter */}
+        {/* Hero Section - Greeting */}
         <Card className="text-center py-6 sm:py-8">
           <div className="flex flex-col items-center">
-            <StepsIcon className="w-5 h-5 sm:w-6 sm:h-6 text-muted-foreground mb-2" />
-            <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide">Steps</span>
-            <span className="text-4xl sm:text-5xl md:text-6xl font-light mt-2">
-              {todayData.activity.steps?.toLocaleString() ?? "--"}
-            </span>
-            <p className="text-muted-foreground text-xs sm:text-sm mt-3">
+            <p className="text-xl sm:text-2xl font-light">
               {getGreeting()}{userName ? `, ${userName}` : ""}
             </p>
-            <p className="text-muted-foreground text-[10px] sm:text-xs mt-1">{today}</p>
+            <p className="text-muted-foreground text-xs sm:text-sm mt-2">{today}</p>
           </div>
         </Card>
 
@@ -1002,15 +951,9 @@ export default function Dashboard({ userName }: { userName?: string }) {
         {/* Weekly Trends */}
         <Card>
           <h2 className="text-sm sm:text-base font-light mb-3 sm:mb-4">7-Day Trends</h2>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-            <div>
-              <h3 className="text-xs sm:text-sm text-muted-foreground mb-2 sm:mb-3">Scores</h3>
-              <WeeklyTrendChart data={weekData} />
-            </div>
-            <div>
-              <h3 className="text-xs sm:text-sm text-muted-foreground mb-2 sm:mb-3">Daily Steps</h3>
-              <StepsChart data={weekData} />
-            </div>
+          <div>
+            <h3 className="text-xs sm:text-sm text-muted-foreground mb-2 sm:mb-3">Weekly Scores</h3>
+            <WeeklyTrendChart data={weekData} />
           </div>
         </Card>
 
