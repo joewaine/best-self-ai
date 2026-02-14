@@ -1,6 +1,6 @@
 // Speech-to-text using OpenAI's Whisper API
 
-import OpenAI from "openai";
+import OpenAI, { toFile } from "openai";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -8,9 +8,8 @@ const openai = new OpenAI({
 
 // Convert audio buffer to text using OpenAI Whisper API
 export async function transcribeWithWhisperCpp(audioBuffer: Buffer) {
-  // Create a File object from the buffer for the API
-  const blob = new Blob([new Uint8Array(audioBuffer)], { type: "audio/webm" });
-  const file = new File([blob], "audio.webm", { type: "audio/webm" });
+  // Use OpenAI's toFile helper for proper buffer handling
+  const file = await toFile(audioBuffer, "audio.webm", { type: "audio/webm" });
 
   const response = await openai.audio.transcriptions.create({
     file,
